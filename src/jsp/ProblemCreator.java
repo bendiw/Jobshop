@@ -1,66 +1,105 @@
 package jsp;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.apache.commons.io.IOUtils;
-import org.odftoolkit.odfdom.doc.OdfTextDocument;
 
 public class ProblemCreator {
 	public ProblemCreator(){}
 	
 	public static Problem create(String filename) throws IOException{
-//		TextDocument document = TextDocument.loadDocument("test.odt");
-//		FileReader f = new FileReader(new File(filename));
-		
-		
-		System.out.println(text);
-//		BufferedReader reader = new BufferedReader(buff);
+		List<String[]> strings = new ArrayList<String[]>();
+		List<int[]> values = new ArrayList<int[]>();
 		int machines;
 		int jobs;
-//		String line = reader.readLine();
-		String[] data = reader.readLine().split(" ");
-		System.out.println(data[1]);
+		FileReader fr = new FileReader(new File(filename));
+		BufferedReader b = new BufferedReader(fr);
+		String[] data = b.readLine().trim().split("\\s+");
 		machines = Integer.parseInt(data[0]);
 		jobs = Integer.parseInt(data[1]);
-		int[][] values = new int[jobs][machines*2];
-		for (int j = 0; j < jobs; j++) {
-			data = reader.readLine().split(" ");
-			for (int i = 0; i < data.length; i++) {
-				values[j][i] = Integer.parseInt(data[i]);
+		String line;
+		while((line = b.readLine())!= null){
+			if(line.length()!=0){
+				data = line.trim().split("\\s+");
+				System.out.println(data.length);
+				strings.add(data);
 			}
+		}
+		for (String[] string : strings) {
+			int[] val = new int[machines+jobs];
+			for (int i = 0; i < string.length; i++) {
+				val[i] = Integer.parseInt(string[i]);
+			}
+			values.add(val);
 		}
 		return new Problem(machines, jobs, values);
 	}
 	
 	public static class Problem{
-		
 		private int machines;
-		private int jobs;
-		public Problem(int machines, int jobs, int[][] values){
+		private int numjobs;
+		private ArrayList<Job> jobs;
+		
+		public Problem(int machines, int numjobs, List<int[]> jobList){
 			this.machines = machines;
-			this.jobs = jobs;
+			this.numjobs = numjobs;
+			this.jobs = new ArrayList<Job>();
+			for (int[] j : jobList) {
+				jobs.add(new Job(j));
+			}
+		}
+	}
+	
+	public static class Job{
+		/*
+		indexed list where index corresponds to operation number
+		item[0] is the machine for the operation
+		item[1] is the processing time for the operation */
+		private List<int[]> sequence;
+		private int due;
+		
+		public Job(int[] values){
+			this.sequence = new ArrayList<int[]>();
+			due = 0;
+			int[] j = new int[2];
+			for (int i = 0; i < values.length; i++) {
+				if(i%2==0){
+					j = new int[2];
+					j[0] = values[i];
+				}else{
+					j[1] = values[i];
+					due+=values[i];
+					sequence.add(j);
+				}
+			}
+		}
+		
+		//treat as hard coded since will be set during runtime at demo
+		//i.e. do not calculate when constructing schedules, use getDue()
+		public void setDue(int dueTime){
+			this.due = dueTime;
+		}
+		
+		public int getDue(){
+			return this.due;
+		}
+		
+		@Override
+		public String toString() {
+			String out = "##JOB##\n";
+			for (int[] is : sequence) {
+				out+="Op: "+sequence.indexOf(is)+"\tMchn: "+is[0]+"\tTime: "+is[1]+"\n";
+			}
+			out+="Due: "+this.due+"\n";
+			return out;
 		}
 	}
 	
 	public static void main(String[] args) throws Exception {
-//		ProblemCreator.create("problem1.txt");
-		OdfTextDocument od = OdfTextDocument.loadDocument("1.odt");
-		BufferedInputStream buff = new BufferedInputStream(od.getContentStream());
-		System.out.println(od.getContentRoot().getFirstChild().getTextContent());
-		System.out.println(od.getContentRoot().getFirstChild().getTextContent());
-
-		String texts = od.getContentRoot().getTextContent();
-		System.out.println(texts);
-//		String text = IOUtils.toString(buff);
-//		System.out.println(text);
-
+		Problem p = ProblemCreator.create("2.txt");
+		System.out.println(p.jobs.get(0).toString());
 	}
 }
