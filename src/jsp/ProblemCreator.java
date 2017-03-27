@@ -41,6 +41,8 @@ public class ProblemCreator {
 		private int machines;
 		private int numjobs;
 		private ArrayList<Job> jobs;
+		private int[][] process;
+		private int[][] machine;
 		
 		public Problem(int machines, int numjobs, List<int[]> jobList){
 			this.machines = machines;
@@ -49,6 +51,28 @@ public class ProblemCreator {
 			for (int[] j : jobList) {
 				jobs.add(new Job(j));
 			}
+			this.process = procMatrix();
+			this.machine = machMatrix();
+		}
+		
+		private int[][] procMatrix(){
+			int[][] matrix = new int[this.jobs.size()][this.jobs.get(0).getSequence().size()];
+			for (Job j : this.jobs) {
+				for (int[] val : j.getSequence()) {
+					matrix[jobs.indexOf(j)][j.getSequence().indexOf(val)] = val[1];
+				}
+			}
+			return matrix;
+		}
+		
+		private int[][] machMatrix(){
+			int[][] matrix = new int[this.jobs.size()][this.jobs.get(0).getSequence().size()];
+			for (Job j : this.jobs) {
+				for (int[] val : j.getSequence()) {
+					matrix[jobs.indexOf(j)][j.getSequence().indexOf(val)] = val[0];
+				}
+			}
+			return matrix;
 		}
 		
 		public List<Job> getJobs(){
@@ -88,6 +112,8 @@ public class ProblemCreator {
 			}
 		}
 		
+		
+		
 		//treat as hard coded since will be set during runtime at demo
 		//i.e. do not calculate when constructing schedules, use getDue()
 		public void setDue(int dueTime){
@@ -95,6 +121,10 @@ public class ProblemCreator {
 		}
 		public int getDue(){
 			return this.due;
+		}
+		
+		public List<int[]> getSequence(){
+			return this.sequence;
 		}
 		
 		@Override
