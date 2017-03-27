@@ -2,6 +2,20 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+<<<<<<< HEAD
+	<classpathentry kind="lib" path="lib/commons-math3-3.6.1-javadoc.jar"/>
+	<classpathentry kind="lib" path="lib/commons-math3-3.6.1-sources.jar"/>
+	<classpathentry kind="lib" path="lib/commons-math3-3.6.1-test-sources.jar"/>
+	<classpathentry kind="lib" path="lib/commons-math3-3.6.1-tests.jar"/>
+	<classpathentry kind="lib" path="lib/commons-math3-3.6.1-tools.jar"/>
+	<classpathentry kind="lib" path="lib/commons-math3-3.6.1.jar"/>
+	<classpathentry kind="lib" path="lib/commons-lang3-3.5-javadoc.jar"/>
+	<classpathentry kind="lib" path="lib/commons-lang3-3.5-sources.jar"/>
+	<classpathentry kind="lib" path="lib/commons-lang3-3.5-test-sources.jar"/>
+	<classpathentry kind="lib" path="lib/commons-lang3-3.5-tests.jar"/>
+	<classpathentry kind="lib" path="lib/commons-lang3-3.5.jar"/>
+=======
 	<classpathentry combineaccessrules="false" kind="src" path="/jfreechart"/>
+>>>>>>> refs/remotes/origin/master
 	<classpathentry kind="output" path="bin"/>
 </classpath>
