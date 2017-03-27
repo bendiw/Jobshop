@@ -80,6 +80,14 @@ public class ProblemCreator {
 			return this.jobs;
 		}
 		
+		public int[][] getProcMatrix(){
+			return this.process;
+		}
+		
+		public int[][] getMachMatrix(){
+			return this.machine;
+		}
+		
 		public int getNumJobs(){
 			return this.numjobs;
 		}
@@ -143,5 +151,6 @@ public class ProblemCreator {
 		Problem p = ProblemCreator.create("5.txt");
 		System.out.println(p.getJobs().get(0));
 		System.out.println(Arrays.toString(p.machine[0]));
+		System.out.println(Arrays.toString(p.process[0]));
 	}
 }
