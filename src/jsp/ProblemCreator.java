@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class ProblemCreator {
@@ -18,8 +19,8 @@ public class ProblemCreator {
 		FileReader fr = new FileReader(new File(filename));
 		BufferedReader b = new BufferedReader(fr);
 		String[] data = b.readLine().trim().split("\\s+");
-		machines = Integer.parseInt(data[0]);
-		jobs = Integer.parseInt(data[1]);
+		machines = Integer.parseInt(data[1]);
+		jobs = Integer.parseInt(data[0]);
 		String line;
 		while((line = b.readLine())!= null){
 			if(line.length()!=0){
@@ -28,7 +29,7 @@ public class ProblemCreator {
 			}
 		}
 		for (String[] string : strings) {
-			int[] val = new int[machines+jobs];
+			int[] val = new int[machines*2];
 			for (int i = 0; i < string.length; i++) {
 				val[i] = Integer.parseInt(string[i]);
 			}
@@ -141,5 +142,6 @@ public class ProblemCreator {
 	public static void main(String[] args) throws Exception {
 		Problem p = ProblemCreator.create("5.txt");
 		System.out.println(p.getJobs().get(0));
+		System.out.println(Arrays.toString(p.machine[0]));
 	}
 }
