@@ -15,5 +15,6 @@ public class AntGraph {
 	public AntGraph(Problem p){
 		this.jobs = p.getNumJobs();
 		this.machines = p.getNumMachines();
+		pheromone = 
 	}
 }
