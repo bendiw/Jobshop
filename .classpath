@@ -2,13 +2,5 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="lib/odfdom-java-0.8.7.jar"/>
-	<classpathentry kind="lib" path="lib/commons-net-3.6-sources.jar"/>
-	<classpathentry kind="lib" path="lib/commons-net-3.6.jar"/>
-	<classpathentry kind="lib" path="lib/commons-net-examples-3.6.jar"/>
-	<classpathentry kind="lib" path="lib/commons-io-2.5-javadoc.jar"/>
-	<classpathentry kind="lib" path="lib/commons-io-2.5.jar"/>
-	<classpathentry kind="lib" path="lib/jOpenDocument-1.3.jar"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/xerces"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
