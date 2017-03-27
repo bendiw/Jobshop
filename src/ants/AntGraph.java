@@ -13,6 +13,7 @@ import org.apache.commons.math3.distribution.EnumeratedIntegerDistribution;
 import jsp.ProblemCreator;
 import jsp.ProblemCreator.Job;
 import jsp.ProblemCreator.Problem;
+import jsp.Scheduler;
 
 public class AntGraph {
 	private double[][] pheromone;
@@ -54,10 +55,14 @@ public class AntGraph {
 			for (int j = 0; j < machines*jobs; j++) {
 				moveAnts(ants);
 			}
-			System.out.println(Arrays.toString(ants.get(0).path));
-			System.out.println(Arrays.toString(ants.get(1).path));
-			System.out.println(Arrays.toString(ants.get(2).path));
-
+//			System.out.println(Arrays.toString(ants.get(0).path));
+//			System.out.println(Arrays.toString(ants.get(1).path));
+//			System.out.println(Arrays.toString(ants.get(2).path));
+			if(i == iterations-1){
+				int[] norm = normalizeArray(ants.get(0).path);
+				System.out.println(Arrays.toString(norm));
+				Scheduler.buildScheduleGantt(norm, p);
+			}
 			ants.clear();
 			for (int z = 0; z < noAnts; z++) {
 				ants.add(new Ant(machines, jobs));
