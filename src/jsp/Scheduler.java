@@ -1,17 +1,18 @@
 package jsp;
 
+import org.jfree.ui.ApplicationFrame;
+import org.jfree.ui.RefineryUtilities;
+
 import jsp.ProblemCreator.Problem;
 
 public class Scheduler {
-
-	
 	
 	public static int[] buildSchedule(int[] chromosome, Problem p) {
 		int[][] process = p.getProcMatrix();
 		int[][] machine = p.getMachMatrix();
 		int jobs = p.getNumJobs();
 		int machines = p.getNumMachines();
-		int[][] solution = new int[machines][jobs];
+		int[][] schedule = new int[machines][jobs];
 		int[] nextTask = new int[jobs];
 		int[] jobStart = new int[jobs];
 //		for (int i = 0; i < jobStart.length; i++) {
@@ -25,7 +26,7 @@ public class Scheduler {
 		for (int k = 0; k < chromosome.length; k++) {
 			int i = chromosome[k];
 			int j = machine[i][nextTask[i]];
-			solution[j][nextSol[j]] = i;
+			schedule[j][nextSol[j]] = i;
 			nextTask[i] ++;
 			nextSol[j] ++;
 			int start = Math.max(jobStart[i], machStart[j]);
@@ -58,4 +59,39 @@ public class Scheduler {
 		}
 		return sum;
 	}
+	
+	public static void buildScheduleGantt(int[] chromosome, Problem p) {
+		int[][] process = p.getProcMatrix();
+		int[][] machine = p.getMachMatrix();
+		int jobs = p.getNumJobs();
+		int machines = p.getNumMachines();
+		int[][] schedule = new int[machines][jobs];
+		int[][] startTime = new int[machines][jobs];
+		int[] nextTask = new int[jobs];
+		int[] jobStart = new int[jobs];
+//		for (int i = 0; i < jobStart.length; i++) {
+//			nextTask[i] = 1;
+//		}
+		int[] nextSol = new int[machines];
+		int[] machStart = new int[machines];
+//		for (int i = 0; i < jobStart.length; i++) {
+//			nextSol[i] = 1;
+//		}
+		for (int k = 0; k < chromosome.length; k++) {
+			int i = chromosome[k];
+			int j = machine[i][nextTask[i]];
+			schedule[j][nextSol[j]] = i;
+			nextTask[i] ++;
+			nextSol[j] ++;
+			int start = Math.max(jobStart[i], machStart[j]);
+			startTime[j][nextSol[j]-1] = start;
+			jobStart[i] = start + process[i][j];
+			machStart[j] = start + process[i][j];
+		}
+		Gantt gantt = new Gantt("JSP", schedule, startTime, process);
+		gantt.pack();
+		RefineryUtilities.centerFrameOnScreen(gantt);
+		gantt.setVisible(true);
+	}
+	
 }
