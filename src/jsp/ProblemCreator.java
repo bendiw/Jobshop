@@ -24,7 +24,6 @@ public class ProblemCreator {
 		while((line = b.readLine())!= null){
 			if(line.length()!=0){
 				data = line.trim().split("\\s+");
-				System.out.println(data.length);
 				strings.add(data);
 			}
 		}
@@ -50,6 +49,18 @@ public class ProblemCreator {
 			for (int[] j : jobList) {
 				jobs.add(new Job(j));
 			}
+		}
+		
+		public List<Job> getJobs(){
+			return this.jobs;
+		}
+		
+		public int getNumJobs(){
+			return this.numjobs;
+		}
+		
+		public int getNumMachines(){
+			return this.machines;
 		}
 	}
 	
@@ -82,16 +93,15 @@ public class ProblemCreator {
 		public void setDue(int dueTime){
 			this.due = dueTime;
 		}
-		
 		public int getDue(){
 			return this.due;
 		}
 		
 		@Override
 		public String toString() {
-			String out = "##JOB##\n";
+			String out = "Job\n";
 			for (int[] is : sequence) {
-				out+="Op: "+sequence.indexOf(is)+"\tMchn: "+is[0]+"\tTime: "+is[1]+"\n";
+				out+="Op:"+sequence.indexOf(is)+"\tMchn:"+is[0]+"\tTime:"+is[1]+"\n";
 			}
 			out+="Due: "+this.due+"\n";
 			return out;
@@ -99,7 +109,7 @@ public class ProblemCreator {
 	}
 	
 	public static void main(String[] args) throws Exception {
-		Problem p = ProblemCreator.create("2.txt");
-		System.out.println(p.jobs.get(0).toString());
+		Problem p = ProblemCreator.create("5.txt");
+		System.out.println(p.getJobs().get(0));
 	}
 }
