@@ -61,6 +61,8 @@ public class AntGraph {
 			if(i == iterations-1){
 				int[] norm = normalizeArray(ants.get(0).path);
 				System.out.println(Arrays.toString(norm));
+				norm = ArrayUtils.remove(norm,0);
+				System.out.println(Arrays.toString(norm));
 				Scheduler.buildScheduleGantt(norm, p);
 			}
 			ants.clear();
