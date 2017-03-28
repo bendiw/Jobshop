@@ -218,9 +218,9 @@ public class AntGraph {
 	}
 	
 	public static void main(String[] args) throws IOException {
-		Problem p = ProblemCreator.create("2.txt");
-		AntGraph a = new AntGraph(p, 2.0, 0.01, 0.5, 0, 1);
-		a.run(600, 100);
+		Problem p = ProblemCreator.create("1.txt");
+		AntGraph a = new AntGraph(p, 2.0, 0.01, 0.1, 0, 1);
+		a.run(400, 36);
 	}
 	
 	public static class Ant{
