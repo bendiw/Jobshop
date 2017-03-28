@@ -32,9 +32,9 @@ public class Gantt extends ApplicationFrame{
 			machineTitles[i] = "M"+i;
 		}
 		int[] taskNr = new int[schedule.length];
-		for (int i = 0; i < machineTitles.length; i++) {
-			for (int j = 0; j < taskSeries.length; j++) {
-				taskSeries[j].add(new Task(machineTitles[i],
+		for (int j = 0; j < taskSeries.length; j++) {
+			for (int i = 0; i < machineTitles.length; i++) {
+				taskSeries[schedule[i][j]].add(new Task(machineTitles[i],
 						new SimpleTimePeriod(startTime[i][j], startTime[i][j] + process[schedule[i][j]][taskNr[j]])));
 				taskNr[j] ++;
 			}
@@ -52,9 +52,9 @@ public class Gantt extends ApplicationFrame{
 				"Machine",
 				"Time",
 				dataset,
+				true,
 				false,
-				false,
-				false
+				true
 		);
 		return chart;
 	}

@@ -80,11 +80,15 @@ public class Scheduler {
 		for (int k = 0; k < chromosome.length; k++) {
 			int i = chromosome[k];
 			int j = machine[i][nextTask[i]];
+//			System.out.println("Job: "+i);
+//			System.out.println("Machine: "+j);
+//			System.out.println("Task: "+nextTask[i]);
+//			System.out.println("");
 			schedule[j][nextSol[j]] = i;
+			int start = Math.max(jobStart[i], machStart[j]);
+			startTime[j][nextSol[j]] = start;
 			nextTask[i] ++;
 			nextSol[j] ++;
-			int start = Math.max(jobStart[i], machStart[j]);
-			startTime[j][nextSol[j]-1] = start;
 			jobStart[i] = start + process[i][j];
 			machStart[j] = start + process[i][j];
 		}
@@ -92,6 +96,18 @@ public class Scheduler {
 		gantt.pack();
 		RefineryUtilities.centerFrameOnScreen(gantt);
 		gantt.setVisible(true);
+		for (int i = 0; i < schedule.length; i++) {
+			System.out.print("M"+i+":");
+			for (int j = 0; j < schedule[i].length; j++) {
+				System.out.print(" "+schedule[i][j]);
+			}
+			System.out.println("");
+			System.out.print("T"+i+":");
+			for (int j = 0; j < schedule[i].length; j++) {
+				System.out.print(" "+startTime[i][j]);
+			}
+			System.out.println("");
+		}
 	}
 	
 }
