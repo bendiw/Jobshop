@@ -123,6 +123,14 @@ public class ProblemCreator {
 			}
 		}
 		
+		public int getProcessTime(int machine) {
+			for (int[] is : sequence) {
+				if (is[0] == machine)
+					return is[1];
+			}
+			return 0;
+		}
+		
 		
 		
 		//treat as hard coded since will be set during runtime at demo
