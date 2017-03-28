@@ -81,6 +81,9 @@ public class AntGraph {
 					bestSpan = antSpan;
 				}
 			}
+			if(i%20 == 0){
+				System.out.println("Iteration: "+i+".\tBest makespan: "+bestSpan+".");
+			}
 			updatePheromoneGlobal(bestPath, bestSpan);
 			
 //			System.out.println(Arrays.toString(ants.get(0).path));
@@ -219,8 +222,8 @@ public class AntGraph {
 	
 	public static void main(String[] args) throws IOException {
 		Problem p = ProblemCreator.create("2.txt");
-		AntGraph a = new AntGraph(p, 2.0, 0.01, 0.5, 0, 1);
-		a.run(600, 100);
+		AntGraph a = new AntGraph(p, 3, 0.01, 0.1, 0, 0.1);
+		a.run(1000, 100);
 	}
 	
 	public static class Ant{
