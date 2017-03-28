@@ -37,8 +37,8 @@ public class Gantt extends ApplicationFrame{
 	}
 
 	private static IntervalCategoryDataset createDataset(int[][] schedule, int[][] startTime, int[][] process) {
-		TaskSeries[] taskSeries = new TaskSeries[schedule[0].length];
-		Task[] tasks = new Task[schedule[0].length];
+		TaskSeries[] taskSeries = new TaskSeries[schedule[0].length]; //one taskSeries for each job
+//		Task[] tasks = new Task[schedule[0].length];
 		for (int i = 0; i < taskSeries.length; i++) {
 			taskSeries[i] = new TaskSeries("Job "+i);
 		}
@@ -51,14 +51,18 @@ public class Gantt extends ApplicationFrame{
 //			int maxTime = getMaxTime(startTime, process);
 //			tasks[i] = (new Task(machineTitles[i], new SimpleTimePeriod(0, maxTime)));
 //		}
-		for (int j = 0; j < taskSeries.length; j++) {
-			for (int i = 0; i < machineTitles.length; i++) {
+		for (int i = 0; i < machineTitles.length; i++) { //for each machine
+			for (int j = 0; j < taskSeries.length; j++) {//for each level in schedule
 //				Task subTask = new Task(machineTitles[i],
 //						new SimpleTimePeriod(startTime[i][j], startTime[i][j] + process[schedule[i][j]][taskNr[j]]));
 //				tasks[i].addSubtask(subTask);
-				taskSeries[schedule[i][j]].add(new Task(machineTitles[i],
-				new SimpleTimePeriod(startTime[i][j], startTime[i][j] + process[schedule[i][j]][taskNr[j]])));
-				taskNr[j] ++;
+				int job = schedule[i][j];
+				System.out.println(job);
+				taskSeries[job].add(new Task(machineTitles[i],
+				new SimpleTimePeriod(startTime[i][j], startTime[i][j] + process[job][taskNr[job]])));
+				if (job == 0)
+					System.out.println("Machine "+i+", task "+j+"  StartTime: "+startTime[i][j]+"  endTime: "+(startTime[i][j] + process[job][taskNr[job]]));
+				taskNr[job] ++;
 			}
 		}
 //		for (int i = 0; i < tasks.length; i++) {
