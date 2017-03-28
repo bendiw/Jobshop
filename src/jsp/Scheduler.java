@@ -30,8 +30,8 @@ public class Scheduler {
 			nextTask[i] ++;
 			nextSol[j] ++;
 			int start = Math.max(jobStart[i], machStart[j]);
-			jobStart[i] = start + process[i][j];
-			machStart[j] = start + process[i][j];
+			jobStart[i] = start + process[i][nextTask[i]-1];
+			machStart[j] = start + process[i][nextTask[i]-1];
 		}
 		return jobStart;
 	}
@@ -89,24 +89,24 @@ public class Scheduler {
 			startTime[j][nextSol[j]] = start;
 			nextTask[i] ++;
 			nextSol[j] ++;
-			jobStart[i] = start + process[i][j];
-			machStart[j] = start + process[i][j];
+			jobStart[i] = start + process[i][nextTask[i]-1];
+			machStart[j] = start + process[i][nextTask[i]-1];
 		}
 		Gantt gantt = new Gantt("JSP", schedule, startTime, process);
 		gantt.pack();
 		RefineryUtilities.centerFrameOnScreen(gantt);
 		gantt.setVisible(true);
 		for (int i = 0; i < schedule.length; i++) {
-			System.out.print("M"+i+":");
+//			System.out.print("M"+i+":");
 			for (int j = 0; j < schedule[i].length; j++) {
-				System.out.print(" "+schedule[i][j]);
+//				System.out.print(" "+schedule[i][j]);
 			}
-			System.out.println("");
-			System.out.print("T"+i+":");
+//			System.out.println("");
+//			System.out.print("T"+i+":");
 			for (int j = 0; j < schedule[i].length; j++) {
-				System.out.print(" "+startTime[i][j]);
+				System.out.println("mchn:"+i+", job: "+schedule[i][j]+", start: "+startTime[i][j]);
 			}
-			System.out.println("");
+//			System.out.println(""); op# on machine:"+j+",
 		}
 	}
 	
