@@ -63,50 +63,50 @@ public class Scheduler {
 	public static void buildScheduleGantt(int[] chromosome, Problem p) {
 		int[][] process = p.getProcMatrix();
 		int[][] machine = p.getMachMatrix();
+
 		int jobs = p.getNumJobs();
 		int machines = p.getNumMachines();
 		int[][] schedule = new int[machines][jobs];
 		int[][] startTime = new int[machines][jobs];
-		int[] nextTask = new int[jobs];
+		int[] tNext = new int[jobs];
 		int[] jobStart = new int[jobs];
-//		for (int i = 0; i < jobStart.length; i++) {
-//			nextTask[i] = 1;
-//		}
-		int[] nextSol = new int[machines];
+		int[] sNext = new int[machines];
 		int[] machStart = new int[machines];
-//		for (int i = 0; i < jobStart.length; i++) {
-//			nextSol[i] = 1;
-//		}
+		int start;
+		
 		for (int k = 0; k < chromosome.length; k++) {
+			start = 0;
 			int i = chromosome[k];
-			int j = machine[i][nextTask[i]];
-//			System.out.println("Job: "+i);
-//			System.out.println("Machine: "+j);
-//			System.out.println("Task: "+nextTask[i]);
-//			System.out.println("");
-			schedule[j][nextSol[j]] = i;
-			int start = Math.max(jobStart[i], machStart[j]);
-			startTime[j][nextSol[j]] = start;
-			nextTask[i] ++;
-			nextSol[j] ++;
-			jobStart[i] = start + process[i][j];
-			machStart[j] = start + process[i][j];
+			int j = machine[i][tNext[i]];
+			schedule[j][sNext[j]] = i;
+			start = Math.max(jobStart[i], machStart[j]);
+			jobStart[i] = start + process[i][tNext[i]];
+			machStart[j] = start + process[i][tNext[i]];
+			startTime[j][sNext[j]] = start;
+			tNext[i] ++;
+			sNext[j] ++;
+		}
+		for (int i = 0; i < schedule.length; i++) {
+			for (int j = 0; j < schedule[i].length; j++) {
+				System.out.print(schedule[i][j]+", ");
+			}
+			System.out.println("");
 		}
 		Gantt gantt = new Gantt("JSP", schedule, startTime, process);
 		gantt.pack();
 		RefineryUtilities.centerFrameOnScreen(gantt);
 		gantt.setVisible(true);
 		for (int i = 0; i < schedule.length; i++) {
-			System.out.print("M"+i+":");
+//			System.out.print("M"+i+":");
 			for (int j = 0; j < schedule[i].length; j++) {
-				System.out.print(" "+schedule[i][j]);
+//				System.out.print(" "+schedule[i][j]);
 			}
-			System.out.println("");
-			System.out.print("T"+i+":");
+//			System.out.println("");
+//			System.out.print("T"+i+":");
 			for (int j = 0; j < schedule[i].length; j++) {
-				System.out.print(" "+startTime[i][j]);
+//				System.out.print(" "+startTime[i][j]);
 			}
-			System.out.println("");
+//			System.out.println("");
 		}
 	}
 	
