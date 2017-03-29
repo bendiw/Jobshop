@@ -1,7 +1,9 @@
 package jsp;
 
 import java.awt.Color;
+import java.awt.Graphics2D;
 import java.awt.Paint;
+import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,10 +12,14 @@ import jsp.ProblemCreator.Problem;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.axis.CategoryAxis;
+import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.plot.CategoryPlot;
 import org.jfree.chart.renderer.category.CategoryItemRenderer;
+import org.jfree.chart.renderer.category.CategoryItemRendererState;
 import org.jfree.chart.renderer.category.GanttRenderer;
 import org.jfree.data.category.IntervalCategoryDataset;
+import org.jfree.data.gantt.GanttCategoryDataset;
 import org.jfree.data.gantt.Task;
 import org.jfree.data.gantt.TaskSeries;
 import org.jfree.data.gantt.TaskSeriesCollection;
@@ -28,9 +34,9 @@ public class Gantt extends ApplicationFrame{
 		final IntervalCategoryDataset dataset = createDataset(schedule, startTime, process, machine, problem);
 		final JFreeChart chart = createChart(dataset);
 		CategoryPlot plot = (CategoryPlot) chart.getPlot();
-		CategoryItemRenderer renderer = plot.getRenderer();
-//		MyRenderer renderer = new MyRenderer(dataset);
-//		renderer.setSeriesPaint(2, Color.yellow);
+//		CategoryItemRenderer renderer = plot.getRenderer();
+//		MyRenderer renderer = new MyRenderer();
+//		plot.setRenderer(renderer);
 //		plot.getRenderer().setSeriesPaint(1, Color.yellow);
 //		plot.getRenderer().setSeriesPaint(2, Color.yellow);
 		final ChartPanel chartPanel = new ChartPanel(chart);
@@ -106,44 +112,15 @@ public class Gantt extends ApplicationFrame{
 		return chart;
 	}
 	
-//	private static class MyRenderer extends GanttRenderer {
-//
-//	    private static final int PASS = 2; // assumes two passes
-//	    private final List<Color> clut = new ArrayList<Color>();
-//	    private final TaskSeriesCollection model;
-//	    private int row;
-//	    private int col;
-//	    private int index;
-//
-//	    public MyRenderer(TaskSeriesCollection model) {
-//	        this.model = model;
-//	    }
-//
-//	    @Override
-//	    public Paint getItemPaint(int row, int col) {
-//	        if (clut.isEmpty() || this.row != row || this.col != col) {
-//	            initClut(row, col);
-//	            this.row = row;
-//	            this.col = col;
-//	            index = 0;
-//	        }
-//	        int clutIndex = index++ / PASS;
-//	        return clut.get(clutIndex);
-//	    }
-//
-//	    private void initClut(int row, int col) {
-//	        clut.clear();
-//	        Color c = (Color) super.getItemPaint(row, col);
-//	        float[] a = new float[3];
-//	        Color.RGBtoHSB(c.getRed(), c.getGreen(), c.getBlue(), a);
-//	        TaskSeries series = (TaskSeries) model.getRowKeys().get(row);
-//	        List<Task> tasks = series.getTasks(); // unchecked
-//	        int taskCount = tasks.get(col).getSubtaskCount();
-//	        taskCount = Math.max(1, taskCount);
-//	        for (int i = 0; i < taskCount; i++) {
-//	            clut.add(Color.getHSBColor(a[0], a[1] / i, a[2]));
-//	        }
-//	    }
-//	}
+
+	
+	private static class MyRenderer extends GanttRenderer {
+
+	    @Override
+	    public Paint getItemPaint(int row, int col) {
+	    	Paint[] paints = {Color.BLUE, Color.BLACK, Color.DARK_GRAY, Color.GREEN, Color.MAGENTA, Color.ORANGE, Color.PINK, Color.RED, Color.YELLOW, Color.LIGHT_GRAY};
+            return paints[row];
+	    }
+	}
 
 }
