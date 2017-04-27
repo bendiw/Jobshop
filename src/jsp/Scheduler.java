@@ -119,43 +119,13 @@ public class Scheduler {
 				endTimeString.substring(0, endTimeString.length()-1),
 		};
 		Runtime.getRuntime().exec(cmd);
-		System.out.println("Tried python");
 
 		
 		Gantt gantt = new Gantt("JSP", schedule, startTime, process, machine, p);
 		gantt.pack();
 		RefineryUtilities.centerFrameOnScreen(gantt);
 		gantt.setVisible(true);
-<<<<<<< HEAD
-		
-//		for (int i = 0; i < schedule.length; i++) {
-//			for (int j = 0; j < schedule[i].length; j++) {
-=======
-		for (int i = 0; i < schedule.length; i++) {
-			for (int j = 0; j < schedule[i].length; j++) {
->>>>>>> refs/remotes/origin/master
-//				System.out.print(schedule[i][j]+", ");
-//			}
-//			System.out.println("");
-//		}
-//		for (int i = 0; i < schedule.length; i++) {
-//			for (int j = 0; j < schedule[i].length; j++) {
-//				System.out.print(startTime[i][j]+", ");
-//			}
-//			System.out.println("");
-//		}
-//		for (int i = 0; i < schedule.length; i++) {
-//			for (int j = 0; j < schedule[i].length; j++) {
-//				System.out.print(schedule[i][j]+", ");
-//			}
-//			System.out.println("");
-//		}
-//		for (int i = 0; i < schedule.length; i++) {
-//			for (int j = 0; j < schedule[i].length; j++) {
-//				System.out.print(startTime[i][j]+", ");
-//			}
-//			System.out.println("");
-//		}
+
 	}
 	
 }
