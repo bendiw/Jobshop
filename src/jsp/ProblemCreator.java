@@ -159,8 +159,11 @@ public class ProblemCreator {
 	
 	public static void main(String[] args) throws Exception {
 		Problem p = ProblemCreator.create("5.txt");
-		System.out.println(p.getJobs().get(0));
-		System.out.println(Arrays.toString(p.machine[0]));
-		System.out.println(Arrays.toString(p.process[0]));
+		List <int[]> s = p.getJobs().get(0).getSequence();
+		for (int[] is : s) {
+			System.out.println(is[0] + " " + is[1]);
+		}
+//		System.out.println(Arrays.toString(p.machine[0]));
+//		System.out.println(Arrays.toString(p.process[0]));
 	}
 }
