@@ -130,7 +130,7 @@ public class Scheduler {
 
 	}
 	
-	public List<int[]> buildScheduleBee(int[] chromosome, Problem p) {
+	public static List<int[]> buildScheduleBee(int[] chromosome, Problem p) {
 		int[][] process = p.getProcMatrix();
 		int[][] machine = p.getMachMatrix();
 		int jobs = p.getNumJobs();
@@ -237,7 +237,7 @@ public class Scheduler {
 		return job*machines + task;
 	}
 	
-	private List<int[]> getMoves(int[] operations, Problem p) {
+	public static List<int[]> getMoves(int[] operations, Problem p) {
 		int machines = p.getNumMachines();
 		int[] chrom = new int[operations.length];
 		for (int i = 0; i < operations.length; i++) {

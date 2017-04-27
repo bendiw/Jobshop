@@ -196,8 +196,8 @@ public class BeeColony {
 		public Bee(Problem p, int[] chromo, double gamma){
 			chromosome = chromo;
 			this.gamma = gamma;
-			moves = Scheduler.getMoves(chromo, p);
-			attractiveness = Scheduler.getAttractiveness(moves);
+			moves = (ArrayList<int[]>)Scheduler.getMoves(chromo, p);
+			attractiveness = Scheduler.getAttract(moves);
 			indexes = new int[chromo.length];
 			for (int i = 0; i < chromo.length; i++) {
 				indexes[chromosome[i]] = i;
