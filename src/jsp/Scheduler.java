@@ -1,6 +1,8 @@
 package jsp;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.jfree.ui.ApplicationFrame;
 import org.jfree.ui.RefineryUtilities;
@@ -126,6 +128,122 @@ public class Scheduler {
 		RefineryUtilities.centerFrameOnScreen(gantt);
 		gantt.setVisible(true);
 
+	}
+	
+	public List<int[]> buildScheduleBee(int[] chromosome, Problem p) {
+		int[][] process = p.getProcMatrix();
+		int[][] machine = p.getMachMatrix();
+		int jobs = p.getNumJobs();
+		int machines = p.getNumMachines();
+		int[][] schedule = new int[machines][jobs];
+		int[][] startTime = new int[machines][jobs];
+		int[][] endTime = new int[machines][jobs];
+		int[] tNext = new int[jobs];
+		int[] jobStart = new int[jobs];
+		int[] sNext = new int[machines];
+		int[] machStart = new int[machines];
+
+		for (int k = 0; k < chromosome.length; k++) {
+			int i = chromosome[k];
+			int j = machine[i][tNext[i]];
+			schedule[j][sNext[j]] = i;
+			int start = Math.max(jobStart[i], machStart[j]);
+			startTime[j][sNext[j]] = start;
+			endTime[j][sNext[j]] = start + p.getJobs().get(i).getProcessTime(j);
+			jobStart[i] = start + process[i][tNext[i]];
+			machStart[j] = start + process[i][tNext[i]];
+			tNext[i] ++;
+			sNext[j] ++;
+		}
+		List<List<Integer>> criticalPath = getCriticalPath(p, schedule, startTime, endTime);
+		List<int[]> moves = new ArrayList<int[]>();
+		for (int i = 0; i < criticalPath.size(); i++) {
+			List<Integer> block = criticalPath.get(i);
+			if (i != 0 && block.size() > 1) {
+				int[] move = new int[2];
+				move[0] = block.get(0);
+				move[1] = block.get(1);
+				moves.add(0, move);
+			}
+			if (i != criticalPath.size()-1 && block.size() > 1) {
+				int[] move = new int[2];
+				int size = block.size();
+				move[0] = block.get(size-2);
+				move[1] = block.get(size-1);
+				moves.add(0, move);
+			}
+		}
+		return moves;
+	}
+	
+	private static List<List<Integer>> getCriticalPath(Problem p, int[][] schedule, int[][] startTime, int[][] endTime) {
+		int latest = 0;
+		int latestJob = 0;
+		int jobs = p.getNumJobs();
+		int machines = p.getNumMachines();
+		int[] task = new int[jobs];
+		for (int i = 0; i < task.length; i++) {
+			task[i] = machines-1;
+		}
+		
+		for (int i = 0; i < machines; i++) {
+			if (latest < endTime[i][jobs-1]) {
+				latest = endTime[i][jobs-1];
+				latestJob = schedule[i][jobs-1];
+			}
+		}
+		
+		int[][] machineSeq = p.getMachMatrix();
+		int machine = machineSeq[latestJob][task[latestJob]];
+		List<List<Integer>> criticalPath = new ArrayList<List<Integer>>();
+		int scheduleTask = jobs - 1;
+		
+		while (true) {
+			List<Integer> block = new ArrayList<Integer>();
+			while (true) {
+				block.add(0, getOpNr(latestJob, machines, task[latestJob]--));
+				if (endTime[machine][scheduleTask-1]  != startTime[machine][scheduleTask]) {
+					criticalPath.add(0, block);
+					break;
+				} else {
+					latestJob = schedule[machine][scheduleTask-1];
+					scheduleTask --;
+				}
+			}
+			boolean foundNew = false;
+			for (int i = 0; i < endTime.length; i++) {
+				if (i != machine) {
+					for (int j = 0; j < endTime[0].length; j++) {
+						if (schedule[i][j] == latestJob && endTime[i][j] == startTime[machine][scheduleTask])  {
+							scheduleTask = j;
+							machine = i;
+							foundNew = true;
+							break;
+						}
+					}
+				}
+				if (foundNew) {
+					break;
+				}
+			}
+			if (! foundNew) {
+				break;
+			}
+		}
+		return criticalPath;
+	}
+	
+	private static int getOpNr(int job, int machines, int task) {
+		return job*machines + task;
+	}
+	
+	private List<int[]> getMoves(int[] operations, Problem p) {
+		int machines = p.getNumMachines();
+		int[] chrom = new int[operations.length];
+		for (int i = 0; i < operations.length; i++) {
+			chrom[i] = Math.floorDiv(operations[i], machines);
+		}
+		return buildScheduleBee(chrom, p);
 	}
 	
 }
