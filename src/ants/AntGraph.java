@@ -60,7 +60,7 @@ public class AntGraph {
 		}
 	}
 	
-	public void run(int iterations, int noAnts){
+	public void run(int iterations, int noAnts) throws IOException{
 		List<Ant> ants = new ArrayList<Ant>();
 		
 		//vars to store best global solution
@@ -272,9 +272,15 @@ public class AntGraph {
 	}
 	
 	public static void main(String[] args) throws IOException {
+<<<<<<< HEAD
 		Problem p = ProblemCreator.create("3.txt");
 		AntGraph a = new AntGraph(p, 2, 0.008, 0.1, 0, 1, 100, 0.001); //decay was 0.01
 		a.run(2000, 30);
+=======
+		Problem p = ProblemCreator.create("1.txt");
+		AntGraph a = new AntGraph(p, 3, 0.01, 0.1, 0, 0.1);
+		a.run(100, 100);
+>>>>>>> refs/remotes/origin/master
 	}
 	
 	public static class Ant{

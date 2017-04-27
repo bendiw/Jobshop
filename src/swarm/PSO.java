@@ -35,14 +35,13 @@ public class PSO {
 		System.out.println(indexes.size());
 	}
 	
-	public void run(int iterations, int swarmSize, double maxInertia, double minInertia, double MIEprob){
+	public void run(int iterations, int swarmSize, double maxInertia, double minInertia, double MIEprob, double endTemp, double cooling){
 		Particle[] swarm = new Particle[swarmSize];
 		double vLim = p.getNumJobs()*p.getNumMachines()*0.1;
 		for (int i = 0; i < swarmSize; i++) {
-			Particle prt = new Particle(r,p.getNumJobs(),p.getNumMachines(),1,1,vLim,-vLim); //fix values
+			Particle prt = new Particle(r,p.getNumJobs(),p.getNumMachines(),2,2,vLim,-vLim); //fix values
 			swarm[i] = prt;
 		}
-		
 		double inertia = maxInertia;
 		int globalBest = Integer.MAX_VALUE;
 		double[] bestPos= null;
@@ -56,7 +55,8 @@ public class PSO {
 				swarm[j].updateFitness(fit);
 				double mie = r.nextDouble();
 				if(mie <= MIEprob){
-					MIE(swarm[j], fit);
+					double initTemp = fit-globalBest;
+					MIE(swarm[j], fit, initTemp, endTemp, cooling);
 				}
 				if(fit < globalBest){
 					changed = true;
@@ -66,7 +66,6 @@ public class PSO {
 //					bestChromo = swarm[j].getJobArray();
 				}
 			}
-			
 			inertia = maxInertia - (i*(maxInertia-minInertia)/(double)iterations);
 			//move particles
 			for (int j = 0; j < swarm.length; j++) {
@@ -87,30 +86,42 @@ public class PSO {
 	}
 	
 	
-	private void MIE(Particle prt, int fitness){
-		double[] position = prt.getPosition().clone();
+	private void MIE(Particle prt, int fitness, double startTemp, double endTemp, double cooling){
+//		double[] position = prt.getPosition().clone();
+		double[] position = Arrays.copyOf(prt.getPosition(), prt.getPosition().length);
 		int[] jobArray = Utils.getJobArray(position, p.getNumJobs());
-		
-		Collections.shuffle(indexes);
-		double q = r.nextDouble();
-		if(q<=pSwap){
-			position = swap(position, jobArray, indexes);
-		}
-		else if(q>pSwap && q <=pInsert+pSwap){
-			position =  insert(position, jobArray, indexes);
-		}
-//		else if(q>pInsert+pSwap && q<pInsert+pSwap+pInvert)
-//			return invert(position, jobArray, indexes);
-//		else
-//			return position; //longMov(position, jobArray, indexes);
-		int newFitness = calcFitness(position);
-		if(newFitness <= fitness){
-			prt.setPosition(position);
-			prt.updateFitness(newFitness);
+		double temperature = startTemp;
+		while(temperature > endTemp){
+			Collections.shuffle(indexes);
+			double q = r.nextDouble();
+			if(q<=pSwap){
+				position = swap(position, jobArray);
+			}
+			else if(q>pSwap && q <=pInsert+pSwap){
+				position =  insert(position, jobArray);
+			}
+			else if(q>pInsert+pSwap && q<pInsert+pSwap+pInvert)
+				invert(position, jobArray);
+			else
+				longMov(position, jobArray);
+			int newFitness = calcFitness(position);
+			if(newFitness <= fitness){
+				prt.setPosition(position);
+				prt.updateFitness(newFitness);
+			}else{
+				double delta = newFitness-fitness;
+				double rand = r.nextDouble();
+				double accept = Math.exp(-(delta/temperature))*1;
+				if(rand < Math.min(1, accept)){
+					prt.setPosition(position);
+					prt.updateFitness(newFitness);
+				}
+			}
+			temperature = temperature*cooling;
 		}
 	}
 	
-	private double[] swap(double[] position, int[] jobArray, List<Integer> indexes){
+	private double[] swap(double[] position, int[] jobArray){
 		boolean swapped = false;
 		int index = indexes.get(0);
 		int count = 1;
@@ -127,33 +138,61 @@ public class PSO {
 		return position;
 	}
 	
-	private double[] insert(double[] position, int[] jobArray, List<Integer> indexes){
+	private double[] insert(double[] position, int[] jobArray){
 		ArrayList<Double> temp = new ArrayList<Double>();
 		for (int i = 0; i < position.length; i++) {
 			temp.add(position[i]);
 		}
 		int index = indexes.get(0);
 		int insIndex = indexes.get(1);
-		temp.remove(index);
 		temp.add(insIndex, position[index]);
+		if(insIndex < index){
+			index+=1;
+		}
+		temp.remove(index);
 		for (int i = 0; i < position.length; i++) {
 			position[i] = temp.get(i);
 		}
 		return position;
 	}
 	
-//	private double[] invert(double[] position, int[] jobArray){
-//		
-//	}
-//	
-//	private double[] longMov(double[] position, int[] jobArray){
-//		
-//	}
+	private double[] invert(double[] position, int[] jobArray){
+		int indexOne = indexes.get(0);
+		int indexTwo = indexes.get(1);
+		int firstIndex = Math.min(indexOne, indexTwo);
+		int secondIndex = Math.max(indexOne,indexTwo);
+		ArrayUtils.reverse(position, firstIndex, secondIndex+1);
+		return position;
+	}
+	
+	private double[] longMov(double[] position, int[] jobArray){
+		ArrayList<Double> tempList = new ArrayList<Double>();
+		ArrayList<Double> tempList2 = new ArrayList<Double>();
+		for (int i = 0; i < position.length; i++) {
+			tempList.add(position[i]);
+		}
+		int indexOne = indexes.get(0);
+		int indexTwo = indexes.get(1);
+		int firstIndex = Math.min(indexOne, indexTwo);
+		int secondIndex = Math.max(indexOne,indexTwo);
+		for (int i = firstIndex; i < secondIndex; i++) {
+			tempList2.add(tempList.remove(firstIndex));
+		}
+		int insert = 0;
+		if(tempList.size()!=0){
+			insert = r.nextInt(tempList.size()+1);
+		}
+		tempList.addAll(insert, tempList2);
+		for (int i = 0; i < position.length; i++) {
+			position[i] = tempList.get(i);
+		}
+		return position;
+	}
 	
 	public static void main(String[] args) throws IOException {
-		Problem p = ProblemCreator.create("1.txt");
-		PSO pso = new PSO(p, 0.5,0.5,0);
-		pso.run(10000, 150, 1.4, 0.4, 0.03);
+		Problem p = ProblemCreator.create("2.txt");
+		PSO pso = new PSO(p, 0.4,0.4,0.1);
+		pso.run(4000, 400, 1.4, 0.4, 0.03, 0.1, 0.97);
 	}
 	
 	public static class Particle{
