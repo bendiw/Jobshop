@@ -63,7 +63,7 @@ public class ProblemCreator {
 					matrix[jobs.indexOf(j)][j.getSequence().indexOf(val)] = val[1];
 				}
 			}
-			System.out.println("proc:" +Arrays.toString(matrix));
+//			System.out.println("proc:" +Arrays.toString(matrix));
 			return matrix;
 		}
 		
