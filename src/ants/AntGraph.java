@@ -17,7 +17,9 @@ import jsp.Scheduler;
 
 public class AntGraph {
 	private double[][] pheromone;
-	private double[] firstPhero;
+	private double[] firstPhero; //pheromone for paths from origin
+	private double maxPhero;
+	private double minPhero;
 	private int jobs;
 	private int machines;
 	private double beta;
@@ -28,7 +30,7 @@ public class AntGraph {
 	private double exploit;
 	private Problem p;
 	
-	public AntGraph(Problem p, double initPheromone, double decay, double evap, double exploit, double beta){
+	public AntGraph(Problem p, double initPheromone, double decay, double evap, double exploit, double beta, double maxPhero, double minPhero){
 		this.p = p;
 		this.beta = beta;
 		this.jobs = p.getNumJobs();
@@ -38,26 +40,43 @@ public class AntGraph {
 		this.decay = decay;
 		this.evap = evap;
 		this.exploit = exploit;
+		this.maxPhero = maxPhero;
+		this.minPhero = minPhero;
 		pheromone = new double[jobs*machines][jobs*machines];
 		firstPhero = new double[jobs];
+		resetPhero();
+	}
+	
+	private void resetPhero(){
 		for (int i = 0; i < firstPhero.length; i++) {
 			firstPhero[i] = initPheromone;
+//			firstPhero[i] = maxPhero;
 		}
-		int[][] proc = p.getProcMatrix();
 		for (int i = 0; i < pheromone[0].length; i++) {
 			for (int j = 0; j < pheromone[1].length; j++) {
 				pheromone[i][j] = initPheromone;
+//				pheromone[i][j] = maxPhero;
 			}
 		}
 	}
 	
 	public void run(int iterations, int noAnts){
 		List<Ant> ants = new ArrayList<Ant>();
+		
+		//vars to store best global solution
+		int globalBestSpan = Integer.MAX_VALUE;
+		int[] globalBestSchedule=null;
+		int[] globalBestChromo = null;
+		int[] globalBestPath = null;
+		
+		//vars to store iteration best solution
 		int bestSpan = Integer.MAX_VALUE;
 		int[] bestSchedule=null;
 		int[] bestChromo = null;
 		int[] bestPath = null;
-		for (int i = 0; i < iterations; i++) {	
+		
+		for (int i = 0; i < iterations; i++) {
+			boolean changed = false;
 			ants.clear();
 			for (int z = 0; z < noAnts; z++) {
 				ants.add(new Ant(machines, jobs));
@@ -66,36 +85,58 @@ public class AntGraph {
 				moveAnts(ants);
 			}
 			
+			bestSpan = Integer.MAX_VALUE; //for iteration best update
+			
 			for (Ant ant : ants) {
 				int[] path = ant.path;
 				int[] chromo = ArrayUtils.remove(normalizeArray(ant.path),0);
 //				System.out.println("path: "+Arrays.toString(path));
 //				System.out.println(Arrays.toString(chromo));
 //				System.out.println("length: "+chromo.length);
+//				System.out.println(Arrays.toString(chromo));
 				int[] schedule = Scheduler.buildSchedule(chromo,p);
 				int antSpan = Scheduler.makespanFitness(schedule);
-				if (antSpan < bestSpan){
+				
+				if (antSpan < bestSpan){ //test for iteration best
 					bestPath = path;
 					bestSchedule = schedule;
 					bestChromo = chromo;
 					bestSpan = antSpan;
 				}
+				
+				if (antSpan < globalBestSpan){ //test for global best
+					changed = true;
+					globalBestPath = path;
+					globalBestSchedule = schedule;
+					globalBestChromo = chromo;
+					globalBestSpan = antSpan;
+					this.maxPhero = (1/(this.decay))*(1/globalBestSpan);
+					if(this.maxPhero < this.minPhero)
+						this.maxPhero = this.minPhero;
+				}
 			}
-			if(i%20 == 0){
-				System.out.println("Iteration: "+i+".\tBest makespan: "+bestSpan+".");
+			if(i%10 == 0){
+//			if(changed){
+				System.out.println("Iteration: "+i+".\tBest global makespan: "+globalBestSpan+".\t Best of iteration: "+bestSpan);
 			}
-			updatePheromoneGlobal(bestPath, bestSpan);
+			updatePheromoneGlobal(globalBestPath, globalBestSpan);
 			
 //			System.out.println(Arrays.toString(ants.get(0).path));
 //			System.out.println(Arrays.toString(ants.get(1).path));
 //			System.out.println(Arrays.toString(ants.get(2).path));
 		}
-		Scheduler.buildScheduleGantt(bestChromo, p);
-		System.out.println(bestChromo.length);
-		System.out.println("chromo: "+Arrays.toString(bestChromo));
-		System.out.println("Best makespan: "+bestSpan);
-		System.out.println("times: "+Arrays.toString(bestSchedule));
-		int[] norm = normalizeArray(ants.get(0).path);
+		for (int j = 0; j < pheromone[0].length; j++) {
+			for (int j2 = 0; j2 < pheromone[1].length; j2++) {
+				System.out.print(pheromone[j][j2]+"\t");
+			}
+			System.out.println("");
+		}
+		Scheduler.buildScheduleGantt(globalBestChromo, p);
+		System.out.println(globalBestChromo.length);
+		System.out.println("chromo: "+Arrays.toString(globalBestChromo));
+		System.out.println("Best makespan: "+globalBestSpan);
+		System.out.println("times: "+Arrays.toString(globalBestSchedule));
+//		int[] norm = normalizeArray(ants.get(0).path);
 //		System.out.println(Arrays.toString(norm));
 //		norm = ArrayUtils.remove(norm,0);
 //		System.out.println(Arrays.toString(norm));
@@ -114,18 +155,25 @@ public class AntGraph {
 		/*decay on all edges*/
 		for (int i = 0; i < pheromone[0].length; i++) {
 			for (int j = 0; j < pheromone[1].length; j++) {
-				this.pheromone[i][j] = this.pheromone[i][j]*(1-this.decay);				
+				this.pheromone[i][j] = this.pheromone[i][j]*(1-this.decay); //non MMAS
+//				this.pheromone[i][j] = Math.max(this.pheromone[i][j]*(1-this.decay), this.minPhero);				
 			}
 		}
 		for (int i = 0; i < this.firstPhero.length; i++) {
-			firstPhero[i] = firstPhero[i]*(1-decay);
+			firstPhero[i] = firstPhero[i]*(1-decay); //non MMAS
+//			firstPhero[i] = Math.max(firstPhero[i]*(1-decay), this.minPhero);
 		}
 		/*increase best path pheromone*/
 		for (int i = 0; i < path.length-1; i++) {
 			if(path[i]==-1){
-				this.firstPhero[Math.floorDiv(path[i+1], machines)] += this.decay*(1/globalLength);
+				this.firstPhero[Math.floorDiv(path[i+1], machines)] += (1-this.decay)*(1/globalLength); //non MMAS, old: this.decay*
+//				this.firstPhero[Math.floorDiv(path[i+1], machines)] += (1/globalLength);
+//				this.firstPhero[Math.floorDiv(path[i+1], machines)] = Math.min(this.firstPhero[Math.floorDiv(path[i+1], machines)], this.maxPhero);
+
 			}else{
-				this.pheromone[path[i]][path[i+1]] += this.decay*(1/globalLength);
+				this.pheromone[path[i]][path[i+1]] += (1-this.decay)*(1/globalLength); //non MMAS, old this.decay*
+//				this.pheromone[path[i]][path[i+1]] += (1/globalLength);
+//				this.pheromone[path[i]][path[i+1]] = Math.min(this.pheromone[path[i]][path[i+1]], this.maxPhero);
 			}
 		}
 	}
@@ -163,7 +211,7 @@ public class AntGraph {
 				EnumeratedIntegerDistribution distr = getDistr(ant);
 				decision = distr.sample();
 			}
-			updatePheromoneLocal(ant.current, decision);
+//			updatePheromoneLocal(ant.current, decision); //comment out to only allow best ant to deposit
 			ant.move(decision);
 		}
 	}
@@ -171,7 +219,7 @@ public class AntGraph {
 	public int[] normalizeArray(int[] val){
 		int[] normalized = new int[machines*jobs+1];
 		for (int i = 0; i < val.length; i++) {
-			normalized[i] = Math.floorDiv(val[i], jobs);
+			normalized[i] = Math.floorDiv(val[i], machines);
 		}
 		return normalized;
 	}
@@ -186,6 +234,9 @@ public class AntGraph {
 			double proc = p.getProcMatrix()[job][oper];
 			double phero = 0;
 			if(ant.current==-1){
+//				System.out.println("jobs: "+jobs);
+//				System.out.println("machines: "+machines);
+//				System.out.println(Math.floorDiv(choices[i],machines));
 				phero = firstPhero[Math.floorDiv(choices[i],machines)];
 			}else{
 				phero = pheromone[ant.current][choices[i]];
@@ -221,9 +272,9 @@ public class AntGraph {
 	}
 	
 	public static void main(String[] args) throws IOException {
-		Problem p = ProblemCreator.create("2.txt");
-		AntGraph a = new AntGraph(p, 3, 0.01, 0.1, 0, 0.1);
-		a.run(1000, 100);
+		Problem p = ProblemCreator.create("3.txt");
+		AntGraph a = new AntGraph(p, 2, 0.008, 0.1, 0, 1, 100, 0.001); //decay was 0.01
+		a.run(2000, 30);
 	}
 	
 	public static class Ant{
@@ -244,7 +295,7 @@ public class AntGraph {
 			this.open = new HashSet<Integer>();
 			this.r = new Random();
 			for (int i = 0; i < jobs; i++) {
-				open.add(i*jobs);
+				open.add(i*machines);
 			}
 		}
 		

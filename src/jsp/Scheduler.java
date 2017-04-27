@@ -84,15 +84,15 @@ public class Scheduler {
 		gantt.setVisible(true);
 		for (int i = 0; i < schedule.length; i++) {
 			for (int j = 0; j < schedule[i].length; j++) {
-				System.out.print(schedule[i][j]+", ");
+//				System.out.print(schedule[i][j]+", ");
 			}
-			System.out.println("");
+//			System.out.println("");
 		}
 		for (int i = 0; i < schedule.length; i++) {
 			for (int j = 0; j < schedule[i].length; j++) {
-				System.out.print(startTime[i][j]+", ");
+//				System.out.print(startTime[i][j]+", ");
 			}
-			System.out.println("");
+//			System.out.println("");
 		}
 	}
 	
