@@ -126,7 +126,6 @@ public class Scheduler {
 		gantt.pack();
 		RefineryUtilities.centerFrameOnScreen(gantt);
 		gantt.setVisible(true);
-<<<<<<< HEAD
 		for (int i = 0; i < schedule.length; i++) {
 			for (int j = 0; j < schedule[i].length; j++) {
 //				System.out.print(schedule[i][j]+", ");
