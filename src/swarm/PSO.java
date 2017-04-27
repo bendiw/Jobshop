@@ -55,7 +55,7 @@ public class PSO {
 				swarm[j].updateFitness(fit);
 				double mie = r.nextDouble();
 				if(mie <= MIEprob){
-					double initTemp = fit-globalBest;
+					double initTemp = fit-globalBest+10;
 					MIE(swarm[j], fit, initTemp, endTemp, cooling);
 				}
 				if(fit < globalBest){

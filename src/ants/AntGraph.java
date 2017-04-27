@@ -3,6 +3,7 @@ package ants;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
@@ -13,6 +14,8 @@ import org.apache.commons.math3.distribution.EnumeratedIntegerDistribution;
 import jsp.ProblemCreator;
 import jsp.ProblemCreator.Job;
 import jsp.ProblemCreator.Problem;
+import swarm.PSO.Particle;
+import utils.Utils;
 import jsp.Scheduler;
 
 public class AntGraph {
@@ -28,9 +31,13 @@ public class AntGraph {
 	private double initPheromone;
 	private Random r;
 	private double exploit;
+	private double pSwap;
+	private double pInsert;
+	private double pInvert;
 	private Problem p;
+	private ArrayList<Integer> indexes;
 	
-	public AntGraph(Problem p, double initPheromone, double decay, double evap, double exploit, double beta, double maxPhero, double minPhero){
+	public AntGraph(Problem p, double initPheromone, double decay, double evap, double exploit, double beta, double maxPhero, double minPhero, double pSwap, double pInsert, double pInvert){
 		this.p = p;
 		this.beta = beta;
 		this.jobs = p.getNumJobs();
@@ -40,11 +47,18 @@ public class AntGraph {
 		this.decay = decay;
 		this.evap = evap;
 		this.exploit = exploit;
+		this.pSwap = pSwap;
+		this.pInsert = pInsert;
+		this.pInvert = pInvert;
 		this.maxPhero = maxPhero;
 		this.minPhero = minPhero;
 		pheromone = new double[jobs*machines][jobs*machines];
 		firstPhero = new double[jobs];
 		resetPhero();
+		indexes = new ArrayList<Integer>();
+		for (int i = 1; i < p.getNumJobs()*p.getNumMachines(); i++) {
+			indexes.add(i);
+		}
 	}
 	
 	private void resetPhero(){
@@ -60,7 +74,7 @@ public class AntGraph {
 		}
 	}
 	
-	public void run(int iterations, int noAnts) throws IOException{
+	public void run(int iterations, int noAnts, double MIEprob, double endTemp, double cooling) throws IOException{
 		List<Ant> ants = new ArrayList<Ant>();
 		
 		//vars to store best global solution
@@ -89,13 +103,18 @@ public class AntGraph {
 			
 			for (Ant ant : ants) {
 				int[] path = ant.path;
-				int[] chromo = ArrayUtils.remove(normalizeArray(ant.path),0);
+				int[] chromo = normalizeArray(ant.path);
 //				System.out.println("path: "+Arrays.toString(path));
 //				System.out.println(Arrays.toString(chromo));
 //				System.out.println("length: "+chromo.length);
 //				System.out.println(Arrays.toString(chromo));
 				int[] schedule = Scheduler.buildSchedule(chromo,p);
 				int antSpan = Scheduler.makespanFitness(schedule);
+				double mie = r.nextDouble();
+				if(mie <= MIEprob){
+					double initTemp = antSpan-globalBestSpan+10;
+					MIE(ant, antSpan, initTemp, endTemp, cooling);
+				}
 				
 				if (antSpan < bestSpan){ //test for iteration best
 					bestPath = path;
@@ -115,7 +134,7 @@ public class AntGraph {
 						this.maxPhero = this.minPhero;
 				}
 			}
-			if(i%10 == 0){
+			if(i%10 == 0 || changed){
 //			if(changed){
 				System.out.println("Iteration: "+i+".\tBest global makespan: "+globalBestSpan+".\t Best of iteration: "+bestSpan);
 			}
@@ -216,10 +235,120 @@ public class AntGraph {
 		}
 	}
 	
+	private void MIE(Ant ant, int fitness, double startTemp, double endTemp, double cooling){
+//		double[] position = prt.getPosition().clone();
+		int[] position = Arrays.copyOf(ant.getPath(), ant.getPath().length);
+//		int[] jobArray = Utils.getJobArray(position, p.getNumJobs());
+		double temperature = startTemp;
+		while(temperature > endTemp){
+			Collections.shuffle(indexes);
+			double q = r.nextDouble();
+			if(q<=pSwap){
+				position = swap(position);
+			}
+			else if(q>pSwap && q <=pInsert+pSwap){
+				position =  insert(position);
+			}
+			else if(q>pInsert+pSwap && q<pInsert+pSwap+pInvert){
+				invert(position);
+			}else{
+				longMov(position);
+			}
+			int[] chromo = normalizeArray(position);
+//			System.out.println(Arrays.toString(position));
+//			System.out.println(Arrays.toString(chromo));
+			int[] schedule = Scheduler.buildSchedule(chromo,p);
+			int newFitness = Scheduler.makespanFitness(schedule);
+			if(newFitness <= fitness){
+				ant.setPath(position);
+//				prt.setPosition(position);
+//				prt.updateFitness(newFitness);
+			}else{
+				double delta = newFitness-fitness;
+				double rand = r.nextDouble();
+				double accept = Math.exp(-(delta/temperature))*0.1;
+				if(rand < Math.min(1, accept)){
+//					prt.setPosition(position);
+//					prt.updateFitness(newFitness);
+					ant.setPath(position);
+				}
+			}
+			temperature = temperature*cooling;
+		}
+	}
+	
+	private int[] swap(int[] position){
+		boolean swapped = false;
+		int index = indexes.get(0);
+		int count = 1;
+		while(!swapped){
+			int swapIndex = indexes.get(count);
+			count++;
+			if(position[index]!=position[swapIndex]){
+				int temp = new Integer(position[index]);
+				position[index] = new Integer(position[swapIndex]);
+				position[swapIndex] = temp;
+				swapped = true;
+			}
+		}
+		return position;
+	}
+	
+	private int[] insert(int[] position){
+		ArrayList<Integer> temp = new ArrayList<Integer>();
+		for (int i = 0; i < position.length; i++) {
+			temp.add(position[i]);
+		}
+		int index = indexes.get(0);
+		int insIndex = indexes.get(1);
+		temp.add(insIndex, position[index]);
+		if(insIndex < index){
+			index+=1;
+		}
+		temp.remove(index);
+		for (int i = 0; i < position.length; i++) {
+			position[i] = temp.get(i);
+		}
+		return position;
+	}
+	
+	private int[] invert(int[] position){
+		int indexOne = indexes.get(0);
+		int indexTwo = indexes.get(1);
+		int firstIndex = Math.min(indexOne, indexTwo);
+		int secondIndex = Math.max(indexOne,indexTwo);
+		ArrayUtils.reverse(position, firstIndex, secondIndex+1);
+		return position;
+	}
+	
+	private int[] longMov(int[] position){
+		ArrayList<Integer> tempList = new ArrayList<Integer>();
+		ArrayList<Integer> tempList2 = new ArrayList<Integer>();
+		for (int i = 0; i < position.length; i++) {
+			tempList.add(position[i]);
+		}
+		int indexOne = indexes.get(0);
+		int indexTwo = indexes.get(1);
+		int firstIndex = Math.min(indexOne, indexTwo);
+		int secondIndex = Math.max(indexOne,indexTwo);
+		for (int i = firstIndex; i < secondIndex; i++) {
+			tempList2.add(tempList.remove(firstIndex));
+		}
+		int insert = 1;
+		if(tempList.size()!=0){
+			insert = r.nextInt(tempList.size())+1;
+		}
+		tempList.addAll(insert, tempList2);
+		for (int i = 0; i < position.length; i++) {
+			position[i] = tempList.get(i);
+		}
+		return position;
+	}
+	
 	public int[] normalizeArray(int[] val){
-		int[] normalized = new int[machines*jobs+1];
-		for (int i = 0; i < val.length; i++) {
-			normalized[i] = Math.floorDiv(val[i], machines);
+		int[] normalized = new int[machines*jobs];
+		for (int i = 1; i < val.length; i++) {
+			normalized[i-1] = Math.floorDiv(val[i], machines);
 		}
 		return normalized;
 	}
@@ -272,9 +401,15 @@ public class AntGraph {
 	}
 	
 	public static void main(String[] args) throws IOException {
+<<<<<<< HEAD
 		Problem p = ProblemCreator.create("3.txt");
 		AntGraph a = new AntGraph(p, 2, 0.008, 0.1, 0, 1, 100, 0.001); //decay was 0.01
 		a.run(2000, 30);
+=======
+		Problem p = ProblemCreator.create("2.txt");
+		AntGraph a = new AntGraph(p, 2, 0.008, 0.1, 0, 1, 100, 0.001, 0.4, 0.4, 0.1); //decay was 0.01
+		a.run(4000, 50, 0.1, 0.1, 0.97);
+>>>>>>> refs/remotes/origin/master
 	}
 
 	
@@ -306,6 +441,10 @@ public class AntGraph {
 		
 		public int[] getPath(){
 			return this.path;
+		}
+		
+		public void setPath(int[] path){
+			this.path = path;
 		}
 		
 		public int getCurrent(){
