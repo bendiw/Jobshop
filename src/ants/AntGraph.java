@@ -51,7 +51,7 @@ public class AntGraph {
 		}
 	}
 	
-	public void run(int iterations, int noAnts){
+	public void run(int iterations, int noAnts) throws IOException{
 		List<Ant> ants = new ArrayList<Ant>();
 		int bestSpan = Integer.MAX_VALUE;
 		int[] bestSchedule=null;
@@ -221,9 +221,9 @@ public class AntGraph {
 	}
 	
 	public static void main(String[] args) throws IOException {
-		Problem p = ProblemCreator.create("2.txt");
+		Problem p = ProblemCreator.create("1.txt");
 		AntGraph a = new AntGraph(p, 3, 0.01, 0.1, 0, 0.1);
-		a.run(1000, 100);
+		a.run(100, 100);
 	}
 	
 	public static class Ant{
