@@ -130,7 +130,7 @@ public class Scheduler {
 
 	}
 	
-	public List<int[]> buildScheduleBee(int[] chromosome, Problem p) {
+	private List<int[]> buildScheduleBee(int[] chromosome, Problem p) {
 		int[][] process = p.getProcMatrix();
 		int[][] machine = p.getMachMatrix();
 		int jobs = p.getNumJobs();
@@ -233,17 +233,106 @@ public class Scheduler {
 		return criticalPath;
 	}
 	
-	private static int getOpNr(int job, int machines, int task) {
-		return job*machines + task;
+	private int[] buildScheduleAttract(int[] chromosome, Problem p, int[] move, boolean flipped) {
+		int[][] process = p.getProcMatrix();
+		int[][] machine = p.getMachMatrix();
+		int jobs = p.getNumJobs();
+		int machines = p.getNumMachines();
+		int[][] schedule = new int[machines][jobs];
+		int[][] startTime = new int[machines][jobs];
+		int[] tNext = new int[jobs];
+		int[] jobStart = new int[jobs];
+		int[] sNext = new int[machines];
+		int[] machStart = new int[machines];
+
+		for (int k = 0; k < chromosome.length; k++) {
+			int i = chromosome[k];
+			int j = machine[i][tNext[i]];
+			schedule[j][sNext[j]] = i;
+			int start = Math.max(jobStart[i], machStart[j]);
+			startTime[j][sNext[j]] = start;
+			jobStart[i] = start + process[i][tNext[i]];
+			machStart[j] = start + process[i][tNext[i]];
+			tNext[i] ++;
+			sNext[j] ++;
+		}
+		if (flipped) {
+			int a = move[0];
+			int b = move[1];
+			move[0] = b;
+			move[1] = a;			
+		}
+		int job1 = Math.floorDiv(move[0], machines);
+		int job2 = Math.floorDiv(move[1], machines);
+		int task1 = move[0]%machines;
+		int task2 = move[1]%machines;
+		int nextMachine = machine[job1][task1];
+		int[] sTimes = new int[3];
+		for (int i = 0; i < jobs-1; i++) {
+			if (schedule[nextMachine][i] == job2) {
+				sTimes[0] = startTime[nextMachine][i+1];
+				break;
+			}
+		}
+		if (task1 < machines-1) {
+			nextMachine = machine[job1][task1];
+			for (int i = 0; i < jobs; i++) {
+				if (schedule[nextMachine][i] == job1) {
+					sTimes[1] = startTime[nextMachine][i];
+					break;
+				}
+			}
+		}
+		if (task2 < machines-1) {
+			nextMachine = machine[job2][task2];
+			for (int i = 0; i < jobs; i++) {
+				if (schedule[nextMachine][i] == job2) {
+					sTimes[2] = startTime[nextMachine][i];
+					break;
+				}
+			}
+		}
+		return sTimes;
+		
 	}
 	
-	private List<int[]> getMoves(int[] operations, Problem p) {
+	private int[] makeChrom(int[] operations, Problem p) {
 		int machines = p.getNumMachines();
 		int[] chrom = new int[operations.length];
 		for (int i = 0; i < operations.length; i++) {
 			chrom[i] = Math.floorDiv(operations[i], machines);
 		}
+		return chrom;
+	}
+	
+	private static int getOpNr(int job, int machines, int task) {
+		return job*machines + task;
+	}
+	
+	public List<int[]> getMoves(int[] operations, Problem p) {
+		int[] chrom = makeChrom(operations, p);
 		return buildScheduleBee(chrom, p);
 	}
 	
+	public int[] getAttract(List<int[]> moves, Problem p, int[] operations) {
+		int[] attract = new int[moves.size()];
+		int counter = 0;
+		for (int[] move : moves) {
+			int[] oldT = buildScheduleAttract(makeChrom(operations, p), p, move, false);
+			for (int i = 0; i < operations.length; i++) {
+				if (operations[i] == move[0])
+					operations[i] = move[1];
+				else if (operations[i] == move[1])
+					operations[i] = move[0];
+			}
+			int[] newT = buildScheduleAttract(makeChrom(operations, p), p, move, true);
+			int sum = 0;
+			for (int i = 0; i < 3; i++) {
+				sum += (oldT[i]-newT[i]);
+			}
+			attract[counter] = sum;
+			counter ++;
+		}
+		return attract;
+	}
 }
