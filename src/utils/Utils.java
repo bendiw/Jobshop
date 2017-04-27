@@ -1,6 +1,7 @@
 package utils;
 
 import java.util.Arrays;
+import java.util.Random;
 
 import org.apache.commons.lang3.ArrayUtils;
 
@@ -20,5 +21,18 @@ public class Utils {
 //		System.out.println(Arrays.toString(indexArray));
 //		System.out.println(Arrays.toString(jobArray));
 		return jobArray;
+	}
+	
+	public static void shuffleArray(int[] array)
+	{
+	    int index, temp;
+	    Random random = new Random();
+	    for (int i = array.length - 1; i > 0; i--)
+	    {
+	        index = random.nextInt(i + 1);
+	        temp = array[index];
+	        array[index] = array[i];
+	        array[i] = temp;
+	    }
 	}
 }
