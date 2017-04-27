@@ -3,7 +3,20 @@ package bees;
 import jsp.ProblemCreator;
 import jsp.ProblemCreator.Problem;
 import jsp.Scheduler;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Random;
+import utils.Utils;
+
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.math3.distribution.EnumeratedIntegerDistribution;
+
+import ants.AntGraph.Ant;
 
 public class BeeColony {
 	private Problem p;
@@ -12,6 +25,7 @@ public class BeeColony {
 	private double rating;
 	private int waggleFactor;
 	private double waggleProb;
+	private double[] followProb;
 	private int eliteMax;
 	private int iter;
 	private double[][] path;
@@ -23,7 +37,7 @@ public class BeeColony {
 	
 	
 	
-	public BeeColony(Problem p, double alpha, double beta, double rating, int waggleFactor, double waggleProb, int eliteMax, int iter) {
+	public BeeColony(Problem p, double alpha, double beta, double rating, double waggleProb) {
 		this.p = p;
 		this.alpha = alpha;
 		this.beta = beta;
@@ -32,64 +46,223 @@ public class BeeColony {
 		this.waggleProb = waggleProb;
 		this.eliteMax = eliteMax;
 		this.iter = iter;
+		this.followProb = new double[]{0.6, 0.2, 0.02, 0};
 		r = new Random();
 		init();
-		run();
 	}
 	
 	private void init(){
-		numJobs = p.getNumJobs();
-		numMachs = p.getNumMachines();
-		path = new double[numJobs][numJobs*numMachs];
-		setInitSol();
 	}
 	
-	private void setInitSol(){
-		for (int i = 0; i < numJobs; i++) {
-			for (int j = 0; j < path[i].length; j++) {
-				path[i][j] = r.nextDouble();
-			}
-			setProfit(i);
+	private ArrayList<int[]> generateInitSol(int bees){
+		ArrayList<int[]> chromos = new ArrayList<int[]>();
+		int[] initChromo = new int[p.getNumJobs()*p.getNumMachines()];
+		for (int i = 0; i < initChromo.length; i++) {
+			initChromo[i] = i;
 		}
+		for (int i = 0; i < bees; i++) {
+			int[] chromo = initChromo.clone();
+			Utils.shuffleArray(chromo);
+			chromos.add(chromo);
+		}
+		return chromos;
 	}
 	
 	private void setProfit(int bee) {
-		int[] solution = new int[numJobs*numMachs];
-		int minPos;
-		int[] visited = new int[numJobs*numMachs];
-		for (int i = 0; i < path[bee].length; i++) {
-			minPos = 0;
-			for (int j = 0; j < path[bee].length; j++) {
-				if (path[bee][j] < path[bee][minPos] && visited[j] != 1) {
-					minPos = j;
+	}
+	
+	private EnumeratedIntegerDistribution getDistr(Bee bee){
+		int[] choices = new int[bee.getMoves().size()];
+		for (int i = 0; i < choices.length; i++) {
+			choices[i]=i;
+		}
+		double[] ratings = bee.getRatings();
+		double[] attr = bee.getAttractiveness();
+		double[] probs = new double[choices.length];
+		double sum = 0;
+		for (int i = 0; i < choices.length; i++) {
+			probs[i] = Math.pow(ratings[i],alpha)*Math.pow(attr[i], beta);
+			sum += probs[i];
+		}
+		for (int i = 0; i < probs.length; i++) {
+			probs[i] = probs[i]/sum;
+		}
+		return new EnumeratedIntegerDistribution(choices, probs);
+	}
+	
+	private EnumeratedIntegerDistribution getDistr(ArrayList<Double> prof, double avgProf){
+		int[] indexes = new int[prof.size()];
+		for (int i = 0; i < indexes.length; i++) {
+			indexes[i] = i;
+		}
+		double[] probs = new double[prof.size()];
+		for (int i = 0; i < probs.length; i++) {
+			probs[i] = prof.get(i)/avgProf;
+		}
+		return new EnumeratedIntegerDistribution(indexes, probs);
+	}
+
+	
+	private void run(int iterations, int bees, double probDance) {
+		ArrayList<int[]> initChromos = generateInitSol(bees);
+		ArrayList<Bee> colony = new ArrayList<Bee>();
+		for (int i = 0; i < bees; i++) {
+			colony.add(new Bee(p, initChromos.get(i), rating));
+		}
+		int globBest = Integer.MAX_VALUE;
+		int[] bestChromo = null;
+		int[] bestSchedule = null;
+		forage(colony);
+		for (int i = 0; i < iterations; i++) {
+			boolean changed = false; 
+			ArrayList<Bee> dancers = new ArrayList<Bee>();
+			ArrayList<Double> danceProf = new ArrayList<Double>();
+			double[] prof = new double[colony.size()];
+			int avgProf = 0;
+			for (int j = 0; j < colony.size(); j++) {
+				Bee bee = colony.get(j);
+				int[] schedule = Scheduler.buildSchedule(bee.getChromo(),p);
+				int makeSpan = Scheduler.makespanFitness(schedule);
+				if(makeSpan < globBest){
+					globBest = makeSpan;
+					bestChromo = bee.getChromo();
+					bestSchedule = schedule;
+					changed = true;
+				}
+				double q = r.nextDouble();
+				if(q<waggleProb){
+					dancers.add(bee);
+					double beeProf = 1/(double)makeSpan;
+					danceProf.add(beeProf);
+					prof[j] = beeProf;
+					avgProf+= beeProf;
 				}
 			}
-			visited[minPos] = 1;
-			solution[minPos] = i;
-		}
-		for (int i = 0; i < solution.length; i++) {
-			solution[i] = solution[i]%numJobs;
-		}
-		int[] finishingTimes = Scheduler.buildSchedule(solution, p);
-		int makeSpan = 0;
-		for (int i = 0; i < finishingTimes.length; i++) {
-			if (makeSpan < finishingTimes[i]) {
-				makeSpan = finishingTimes[i];
+			avgProf = avgProf/dancers.size();
+			EnumeratedIntegerDistribution danceDistr = getDistr(danceProf, avgProf);
+			for (int j = 0; j < colony.size(); j++) {
+				double q = r.nextDouble();
+				if(q < getProb(prof[j], avgProf)){
+					Bee dancer = dancers.get(danceDistr.sample());
+					colony.get(j).adoptPreferred(dancer.getPreferred(), dancer.getNumPreferred());
+				}
+			}
+			if(changed){
+				System.out.println("Iteration: "+i+"\t Best: "+globBest);
 			}
 		}
-		profit[bee] = 1/makeSpan;
 	}
 	
-	private void run() {
-		
+	public void forage(List<Bee> bees){
+		for (Bee bee : bees) {
+			EnumeratedIntegerDistribution distr = getDistr(bee);
+			int choice = distr.sample();
+			int[] move = bee.getMoves().get(choice);
+			bee.move(move);
+		}
 	}
+	
+	public double getProb(double prof, double avgProf){
+		double ratio = prof/avgProf;
+		if(ratio<0.5)
+			return 0.6;
+		else if(ratio>=0.5 && ratio <0.65)
+			return 0.2;
+		else if(ratio >= 0.65 && ratio < 0.85)
+			return 0.02;
+		else
+			return 0;
+		}
+	
+	public static void main(String[] args) throws IOException {
+		Problem p = ProblemCreator.create("1.txt");
+		BeeColony bc = new BeeColony(p, 1, 1,0.99,0.01);
+		ArrayList<int[]> c = bc.generateInitSol(30);
+		System.out.println(Arrays.toString(c.get(0)));
+		System.out.println(Arrays.toString(c.get(1)));
+		bc.run(1000, 30, 0.01);
+	}
+	
+	public static class Bee{
+		private int[] chromosome;
+		private int[] indexes;
+		private ArrayList<int[]> moves;
+		private double[] attractiveness;
+		private boolean[][] preferred;
+		private int numPref;
+		private double gamma;
+
+		
+		public Bee(Problem p, int[] chromo, double gamma){
+			chromosome = chromo;
+			this.gamma = gamma;
+			moves = Scheduler.getMoves(chromo, p);
+			attractiveness = Scheduler.getAttractiveness(moves);
+			indexes = new int[chromo.length];
+			for (int i = 0; i < chromo.length; i++) {
+				indexes[chromosome[i]] = i;
+			}
+			preferred = new boolean[p.getNumJobs()*p.getNumMachines()][p.getNumJobs()*p.getNumMachines()];
+		}
+		
+		
+		public void adoptPreferred(boolean[][] pref, int numPref){
+			this.preferred = pref;
+			this.numPref = numPref;
+		}
+		
+		public int[] getChromo(){
+			return this.chromosome;
+		}
+		
+		public double[] getAttractiveness(){
+			return this.attractiveness;
+		}
+		
+		public int getNumPreferred(){
+			return this.numPref;
+		}
+		public boolean[][] getPreferred(){
+			return this.preferred;
+		}
+		
+		public ArrayList<int[]> getMoves(){
+			return this.moves;
+		}
+		
+		private int getIntersection(){
+			int num = 0;
+			for (int[] move : moves) {
+				if(preferred[move[0]][move[1]]){
+					num+=1;
+				}
+			}
+			return num;
+		}
+		
+		public double[] getRatings(){
+			double[] ratings = new double[this.moves.size()];
+			for (int i = 0; i < ratings.length; i++) {
+				if(preferred[moves.get(i)[0]][moves.get(i)[1]]){
+					ratings[i] = gamma;
+				}else{
+					int inter = getIntersection();
+					ratings[i] = (1-gamma*inter)/(numPref-inter);
+				}
+			}
+			return ratings;
+		}
+		
+		public void move(int[] move){
+			int first = move[0];
+			int second = move[1];
+			chromosome[indexes[first]] = second;
+			chromosome[indexes[second]] = first;
+			int tempIndex = new Integer(indexes[first]);
+			indexes[first] = new Integer(indexes[second]);
+			indexes[second] = tempIndex;
+		}
+	}
+	
 	
 }
-
-
-
-
-
-
-
-
