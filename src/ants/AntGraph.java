@@ -63,13 +63,13 @@ public class AntGraph {
 	
 	private void resetPhero(){
 		for (int i = 0; i < firstPhero.length; i++) {
-			firstPhero[i] = initPheromone;
-//			firstPhero[i] = maxPhero;
+//			firstPhero[i] = initPheromone;
+			firstPhero[i] = maxPhero;
 		}
 		for (int i = 0; i < pheromone[0].length; i++) {
 			for (int j = 0; j < pheromone[1].length; j++) {
-				pheromone[i][j] = initPheromone;
-//				pheromone[i][j] = maxPhero;
+//				pheromone[i][j] = initPheromone;
+				pheromone[i][j] = maxPhero;
 			}
 		}
 	}
@@ -136,6 +136,9 @@ public class AntGraph {
 			}
 			if(i%10 == 0 || changed){
 //			if(changed){
+				for (int j = 0; j < pheromone[0].length; j++) {
+					System.out.println(Arrays.toString(pheromone[j]));
+				}
 				System.out.println("Iteration: "+i+".\tBest global makespan: "+globalBestSpan+".\t Best of iteration: "+bestSpan);
 			}
 			updatePheromoneGlobal(globalBestPath, globalBestSpan);
@@ -174,25 +177,25 @@ public class AntGraph {
 		/*decay on all edges*/
 		for (int i = 0; i < pheromone[0].length; i++) {
 			for (int j = 0; j < pheromone[1].length; j++) {
-				this.pheromone[i][j] = this.pheromone[i][j]*(1-this.decay); //non MMAS
-//				this.pheromone[i][j] = Math.max(this.pheromone[i][j]*(1-this.decay), this.minPhero);				
+//				this.pheromone[i][j] = this.pheromone[i][j]*(1-this.decay); //non MMAS
+				this.pheromone[i][j] = Math.max(this.pheromone[i][j]*(1-this.decay), this.minPhero);				
 			}
 		}
 		for (int i = 0; i < this.firstPhero.length; i++) {
-			firstPhero[i] = firstPhero[i]*(1-decay); //non MMAS
-//			firstPhero[i] = Math.max(firstPhero[i]*(1-decay), this.minPhero);
+//			firstPhero[i] = firstPhero[i]*(1-decay); //non MMAS
+			firstPhero[i] = Math.max(firstPhero[i]*(1-decay), this.minPhero);
 		}
 		/*increase best path pheromone*/
 		for (int i = 0; i < path.length-1; i++) {
 			if(path[i]==-1){
-				this.firstPhero[Math.floorDiv(path[i+1], machines)] += (1-this.decay)*(1/globalLength); //non MMAS, old: this.decay*
-//				this.firstPhero[Math.floorDiv(path[i+1], machines)] += (1/globalLength);
-//				this.firstPhero[Math.floorDiv(path[i+1], machines)] = Math.min(this.firstPhero[Math.floorDiv(path[i+1], machines)], this.maxPhero);
+//				this.firstPhero[Math.floorDiv(path[i+1], machines)] += (1-this.decay)*(1/globalLength); //non MMAS, old: this.decay*
+				this.firstPhero[Math.floorDiv(path[i+1], machines)] += (1/globalLength);
+				this.firstPhero[Math.floorDiv(path[i+1], machines)] = Math.min(this.firstPhero[Math.floorDiv(path[i+1], machines)], this.maxPhero);
 
 			}else{
-				this.pheromone[path[i]][path[i+1]] += (1-this.decay)*(1/globalLength); //non MMAS, old this.decay*
-//				this.pheromone[path[i]][path[i+1]] += (1/globalLength);
-//				this.pheromone[path[i]][path[i+1]] = Math.min(this.pheromone[path[i]][path[i+1]], this.maxPhero);
+//				this.pheromone[path[i]][path[i+1]] += (1-this.decay)*(1/globalLength); //non MMAS, old this.decay*
+				this.pheromone[path[i]][path[i+1]] += (1/globalLength);
+				this.pheromone[path[i]][path[i+1]] = Math.min(this.pheromone[path[i]][path[i+1]], this.maxPhero);
 			}
 		}
 	}
@@ -266,7 +269,7 @@ public class AntGraph {
 			}else{
 				double delta = newFitness-fitness;
 				double rand = r.nextDouble();
-				double accept = Math.exp(-(delta/temperature))*0.1;
+				double accept = Math.exp(-(delta/temperature))*1;
 				if(rand < Math.min(1, accept)){
 //					prt.setPosition(position);
 //					prt.updateFitness(newFitness);
@@ -401,27 +404,9 @@ public class AntGraph {
 	}
 	
 	public static void main(String[] args) throws IOException {
-<<<<<<< HEAD
-<<<<<<< HEAD
 		Problem p = ProblemCreator.create("1.txt");
-		AntGraph a = new AntGraph(p, 2, 0.008, 0.1, 0, 1, 100, 0.001, 0.4, 0.4, 0.1); //decay was 0.01
-		a.run(4000, 10, 0.1, 0.1, 0.97);
-=======
-<<<<<<< HEAD
-		Problem p = ProblemCreator.create("3.txt");
-		AntGraph a = new AntGraph(p, 2, 0.008, 0.1, 0, 1, 100, 0.001); //decay was 0.01
-		a.run(2000, 30);
-=======
-		Problem p = ProblemCreator.create("2.txt");
-		AntGraph a = new AntGraph(p, 2, 0.008, 0.1, 0, 1, 100, 0.001, 0.4, 0.4, 0.1); //decay was 0.01
-		a.run(4000, 50, 0.1, 0.1, 0.97);
->>>>>>> refs/remotes/origin/master
->>>>>>> refs/remotes/origin/master
-=======
-		Problem p = ProblemCreator.create("2.txt");
-		AntGraph a = new AntGraph(p, 2, 0.008, 0.1, 0, 1, 100, 0.001, 0.4, 0.4, 0.1); //decay was 0.01
-		a.run(4000, 50, 0.1, 0.1, 0.97);
->>>>>>> refs/remotes/origin/master
+		AntGraph a = new AntGraph(p, 2, 0.03, 0.1, 0, 1, 100, 0.001, 0.4, 0.4, 0.1); //decay was 0.01
+		a.run(4000, 20, 0.1, 0.1, 0.97);
 	}
 
 	
