@@ -130,11 +130,7 @@ public class Scheduler {
 
 	}
 	
-<<<<<<< HEAD
 	public static List<int[]> buildScheduleBee(int[] chromosome, Problem p) {
-=======
-	private List<int[]> buildScheduleBee(int[] chromosome, Problem p) {
->>>>>>> refs/remotes/origin/master
 		int[][] process = p.getProcMatrix();
 		int[][] machine = p.getMachMatrix();
 		int jobs = p.getNumJobs();
@@ -205,7 +201,11 @@ public class Scheduler {
 		while (true) {
 			List<Integer> block = new ArrayList<Integer>();
 			while (true) {
+				if(scheduleTask == 0){
+					break;
+				}
 				block.add(0, getOpNr(latestJob, machines, task[latestJob]--));
+//				System.out.println(scheduleTask);
 				if (endTime[machine][scheduleTask-1]  != startTime[machine][scheduleTask]) {
 					criticalPath.add(0, block);
 					break;
@@ -237,7 +237,7 @@ public class Scheduler {
 		return criticalPath;
 	}
 	
-	private int[] buildScheduleAttract(int[] chromosome, Problem p, int[] move, boolean flipped) {
+	private static int[] buildScheduleAttract(int[] chromosome, Problem p, int[] move, boolean flipped) {
 		int[][] process = p.getProcMatrix();
 		int[][] machine = p.getMachMatrix();
 		int jobs = p.getNumJobs();
@@ -300,11 +300,7 @@ public class Scheduler {
 		
 	}
 	
-<<<<<<< HEAD
-	public static List<int[]> getMoves(int[] operations, Problem p) {
-=======
-	private int[] makeChrom(int[] operations, Problem p) {
->>>>>>> refs/remotes/origin/master
+	private static int[] makeChrom(int[] operations, Problem p) {
 		int machines = p.getNumMachines();
 		int[] chrom = new int[operations.length];
 		for (int i = 0; i < operations.length; i++) {
@@ -317,13 +313,14 @@ public class Scheduler {
 		return job*machines + task;
 	}
 	
-	public List<int[]> getMoves(int[] operations, Problem p) {
+	public static List<int[]> getMoves(int[] operations, Problem p) {
 		int[] chrom = makeChrom(operations, p);
 		return buildScheduleBee(chrom, p);
 	}
 	
-	public int[] getAttract(List<int[]> moves, Problem p, int[] operations) {
-		int[] attract = new int[moves.size()];
+	public static double[] getAttract(ArrayList<int[]> moves, Problem p, int[] oper) {
+		double[] attract = new double[moves.size()];
+		int[] operations = oper.clone();
 		int counter = 0;
 		for (int[] move : moves) {
 			int[] oldT = buildScheduleAttract(makeChrom(operations, p), p, move, false);
@@ -334,11 +331,15 @@ public class Scheduler {
 					operations[i] = move[0];
 			}
 			int[] newT = buildScheduleAttract(makeChrom(operations, p), p, move, true);
-			int sum = 0;
+			double sum = 0;
 			for (int i = 0; i < 3; i++) {
 				sum += (oldT[i]-newT[i]);
 			}
-			attract[counter] = sum;
+			if(sum <=0){
+				attract[counter] = -sum;
+			}else{
+				attract[counter] = 1/sum;
+			}
 			counter ++;
 		}
 		return attract;
