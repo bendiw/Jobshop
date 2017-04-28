@@ -84,14 +84,21 @@ public class BeeColony {
 			probs[i] = Math.pow(ratings[i],alpha)*Math.pow(attr[i], beta);
 			sum += probs[i];
 		}
-		for (int i = 0; i < probs.length; i++) {
-			probs[i] = probs[i]/sum;
+		if(sum!=0){
+			for (int i = 0; i < probs.length; i++) {
+				probs[i] = probs[i]/sum;
+			}
+		}else{
+			probs[0] = 1;
 		}
+//		System.out.println("rat: "+ratings[0]);
+//		System.out.println("probs: "+Arrays.toString(probs));
 		return new EnumeratedIntegerDistribution(choices, probs);
 	}
 	
 	private EnumeratedIntegerDistribution getDistr(ArrayList<Double> prof, double avgProf){
 		int[] indexes = new int[prof.size()];
+//		System.out.println(avgProf);
 		for (int i = 0; i < indexes.length; i++) {
 			indexes[i] = i;
 		}
@@ -114,20 +121,24 @@ public class BeeColony {
 		int[] bestSchedule = null;
 		forage(colony);
 		for (int i = 0; i < iterations; i++) {
+			int iterBest = Integer.MAX_VALUE;
 			boolean changed = false; 
 			ArrayList<Bee> dancers = new ArrayList<Bee>();
 			ArrayList<Double> danceProf = new ArrayList<Double>();
 			double[] prof = new double[colony.size()];
-			int avgProf = 0;
+			double avgProf = 0;
 			for (int j = 0; j < colony.size(); j++) {
 				Bee bee = colony.get(j);
-				int[] schedule = Scheduler.buildSchedule(bee.getChromo(),p);
+				int[] schedule = Scheduler.buildSchedule(normalizeArray(bee.getChromo()),p);
 				int makeSpan = Scheduler.makespanFitness(schedule);
 				if(makeSpan < globBest){
 					globBest = makeSpan;
 					bestChromo = bee.getChromo();
 					bestSchedule = schedule;
 					changed = true;
+				}
+				if(makeSpan < iterBest){
+					iterBest = makeSpan;
 				}
 				double q = r.nextDouble();
 				if(q<waggleProb){
@@ -138,27 +149,48 @@ public class BeeColony {
 					avgProf+= beeProf;
 				}
 			}
-			avgProf = avgProf/dancers.size();
-			EnumeratedIntegerDistribution danceDistr = getDistr(danceProf, avgProf);
-			for (int j = 0; j < colony.size(); j++) {
-				double q = r.nextDouble();
-				if(q < getProb(prof[j], avgProf)){
-					Bee dancer = dancers.get(danceDistr.sample());
-					colony.get(j).adoptPreferred(dancer.getPreferred(), dancer.getNumPreferred());
+			if(dancers.size()>0){
+				avgProf = avgProf/dancers.size();
+				EnumeratedIntegerDistribution danceDistr = getDistr(danceProf, avgProf);
+				for (int j = 0; j < colony.size(); j++) {
+					double q = r.nextDouble();
+					if(q < getProb(prof[j], avgProf)){
+						Bee dancer = dancers.get(danceDistr.sample());
+						colony.get(j).adoptPreferred(dancer.getPreferred(), dancer.getNumPreferred());
+					}
 				}
 			}
+			forage(colony);
 			if(changed){
 				System.out.println("Iteration: "+i+"\t Best: "+globBest);
 			}
+//			System.out.println("iteration best: "+iterBest);
 		}
+		System.out.println("\t Best: "+globBest);
+	}
+	public int[] normalizeArray(int[] val){
+		int[] normalized = new int[p.getNumJobs()*p.getNumMachines()];
+		for (int i = 0; i < val.length; i++) {
+			normalized[i] = Math.floorDiv(val[i], p.getNumMachines());
+		}
+		return normalized;
 	}
 	
 	public void forage(List<Bee> bees){
 		for (Bee bee : bees) {
-			EnumeratedIntegerDistribution distr = getDistr(bee);
-			int choice = distr.sample();
-			int[] move = bee.getMoves().get(choice);
-			bee.move(move);
+			if(bee.getMoves().size()>0){
+				EnumeratedIntegerDistribution distr = getDistr(bee);
+				int choice = distr.sample();
+				int[] move = bee.getMoves().get(choice);
+				int[] schedule = Scheduler.buildSchedule(normalizeArray(bee.getChromo()),p);
+				int makeSpan = Scheduler.makespanFitness(schedule);
+//				System.out.println("before:"+makeSpan);
+//				System.out.println(Arrays.toString(bee.getChromo()));
+				bee.move(move);
+//				System.out.println(Arrays.toString(bee.getChromo()));
+//				System.out.println("after:"+makeSpan);
+				bee.updateMoves(p);
+			}
 		}
 	}
 	
@@ -175,12 +207,12 @@ public class BeeColony {
 		}
 	
 	public static void main(String[] args) throws IOException {
-		Problem p = ProblemCreator.create("1.txt");
+		Problem p = ProblemCreator.create("3.txt");
 		BeeColony bc = new BeeColony(p, 1, 1,0.99,0.01);
 		ArrayList<int[]> c = bc.generateInitSol(30);
 		System.out.println(Arrays.toString(c.get(0)));
 		System.out.println(Arrays.toString(c.get(1)));
-		bc.run(1000, 30, 0.01);
+		bc.run(25, 5000, 0.01);
 	}
 	
 	public static class Bee{
@@ -196,8 +228,8 @@ public class BeeColony {
 		public Bee(Problem p, int[] chromo, double gamma){
 			chromosome = chromo;
 			this.gamma = gamma;
-			moves = Scheduler.getMoves(chromo, p);
-			attractiveness = Scheduler.getAttractiveness(moves);
+			moves = (ArrayList<int[]>)Scheduler.getMoves(chromo, p);
+			attractiveness = Scheduler.getAttract(moves, p, chromo);
 			indexes = new int[chromo.length];
 			for (int i = 0; i < chromo.length; i++) {
 				indexes[chromosome[i]] = i;
@@ -213,6 +245,11 @@ public class BeeColony {
 		
 		public int[] getChromo(){
 			return this.chromosome;
+		}
+		
+		public void updateMoves(Problem p){
+			this.moves = (ArrayList<int[]>)Scheduler.getMoves(chromosome, p);
+			attractiveness = Scheduler.getAttract(moves, p, chromosome);
 		}
 		
 		public double[] getAttractiveness(){
@@ -242,12 +279,19 @@ public class BeeColony {
 		
 		public double[] getRatings(){
 			double[] ratings = new double[this.moves.size()];
-			for (int i = 0; i < ratings.length; i++) {
-				if(preferred[moves.get(i)[0]][moves.get(i)[1]]){
-					ratings[i] = gamma;
-				}else{
-					int inter = getIntersection();
-					ratings[i] = (1-gamma*inter)/(numPref-inter);
+			int inter = getIntersection();
+			inter = Math.min(inter, 1);
+			if(numPref ==0 || numPref - inter == 0){
+				for (int i = 0; i < ratings.length; i++) {
+					ratings[i] = 1.0;
+				}
+			}else{
+				for (int i = 0; i < ratings.length; i++) {
+					if(preferred[moves.get(i)[0]][moves.get(i)[1]]){
+						ratings[i] = gamma;
+					}else{
+						ratings[i] = (1-gamma*inter)/(numPref-inter);
+					}
 				}
 			}
 			return ratings;
@@ -256,11 +300,18 @@ public class BeeColony {
 		public void move(int[] move){
 			int first = move[0];
 			int second = move[1];
+//			System.out.println("first: "+first+", sec: "+second);
+//			System.out.println("fIndex:"+indexes[first]+", sIndex: "+indexes[second]);
+//			System.out.println("index: "+Arrays.toString(indexes));
+			preferred[first][second] = true;
+			numPref += 1;
 			chromosome[indexes[first]] = second;
 			chromosome[indexes[second]] = first;
 			int tempIndex = new Integer(indexes[first]);
 			indexes[first] = new Integer(indexes[second]);
 			indexes[second] = tempIndex;
+//			System.out.println("index: "+Arrays.toString(indexes));
+//			System.out.println("fIndex:"+indexes[first]+", sIndex: "+indexes[second]);
 		}
 	}
 	
