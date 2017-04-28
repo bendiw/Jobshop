@@ -190,7 +190,7 @@ public class PSO {
 	}
 	
 	public static void main(String[] args) throws IOException {
-		Problem p = ProblemCreator.create("1.txt");
+		Problem p = ProblemCreator.create("6.txt");
 		PSO pso = new PSO(p, 0.4,0.4,0.1);
 		pso.run(4000, 400, 1.4, 0.4, 0.03, 0.1, 0.97);
 	}
