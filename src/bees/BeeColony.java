@@ -15,6 +15,7 @@ import utils.Utils;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.math3.distribution.EnumeratedIntegerDistribution;
+import org.apache.commons.math3.stat.descriptive.summary.Sum;
 
 import ants.AntGraph.Ant;
 
@@ -106,6 +107,7 @@ public class BeeColony {
 		for (int i = 0; i < probs.length; i++) {
 			probs[i] = prof.get(i)/avgProf;
 		}
+//		System.out.println(Arrays.toString(probs));
 		return new EnumeratedIntegerDistribution(indexes, probs);
 	}
 
@@ -127,8 +129,10 @@ public class BeeColony {
 			ArrayList<Double> danceProf = new ArrayList<Double>();
 			double[] prof = new double[colony.size()];
 			double avgProf = 0;
+			double avgSpan = 0;
 			for (int j = 0; j < colony.size(); j++) {
 				Bee bee = colony.get(j);
+				boolean glob = false;
 				int[] schedule = Scheduler.buildSchedule(normalizeArray(bee.getChromo()),p);
 				int makeSpan = Scheduler.makespanFitness(schedule);
 				if(makeSpan < globBest){
@@ -136,25 +140,31 @@ public class BeeColony {
 					bestChromo = bee.getChromo();
 					bestSchedule = schedule;
 					changed = true;
+					glob = true;
 				}
 				if(makeSpan < iterBest){
 					iterBest = makeSpan;
 				}
 				double q = r.nextDouble();
-				if(q<waggleProb){
+				double beeProf = 1/(double)makeSpan;
+				prof[j] = beeProf;
+				if(q<waggleProb || glob){
 					dancers.add(bee);
-					double beeProf = 1/(double)makeSpan;
 					danceProf.add(beeProf);
-					prof[j] = beeProf;
 					avgProf+= beeProf;
+					avgSpan += (double) makeSpan;
 				}
 			}
+			int recruited = 0;
 			if(dancers.size()>0){
-				avgProf = avgProf/dancers.size();
+				double avgProf2 = avgProf/(double)dancers.size();
 				EnumeratedIntegerDistribution danceDistr = getDistr(danceProf, avgProf);
 				for (int j = 0; j < colony.size(); j++) {
 					double q = r.nextDouble();
-					if(q < getProb(prof[j], avgProf)){
+					double rProb = getProb(prof[j], avgProf2);
+//					System.out.println("r: "+rProb);
+					if(q < rProb){
+						recruited+=1;
 						Bee dancer = dancers.get(danceDistr.sample());
 						colony.get(j).adoptPreferred(dancer.getPreferred(), dancer.getNumPreferred());
 					}
@@ -163,10 +173,12 @@ public class BeeColony {
 			forage(colony);
 			if(changed){
 				System.out.println("Iteration: "+i+"\t Best: "+globBest);
+				System.out.println("bees recruited by dancing: "+recruited);
+				System.out.println("Dancers: "+dancers.size()+", avg. dancer makespan: "+avgSpan/dancers.size());
 			}
 //			System.out.println("iteration best: "+iterBest);
 		}
-		System.out.println("\t Best: "+globBest);
+		System.out.println("Best: "+globBest);
 	}
 	public int[] normalizeArray(int[] val){
 		int[] normalized = new int[p.getNumJobs()*p.getNumMachines()];
@@ -207,12 +219,12 @@ public class BeeColony {
 		}
 	
 	public static void main(String[] args) throws IOException {
-		Problem p = ProblemCreator.create("3.txt");
+		Problem p = ProblemCreator.create("1.txt");
 		BeeColony bc = new BeeColony(p, 1, 1,0.99,0.01);
 		ArrayList<int[]> c = bc.generateInitSol(30);
 		System.out.println(Arrays.toString(c.get(0)));
 		System.out.println(Arrays.toString(c.get(1)));
-		bc.run(25, 5000, 0.01);
+		bc.run(10000, 500, 0.01);
 	}
 	
 	public static class Bee{
@@ -289,11 +301,13 @@ public class BeeColony {
 				for (int i = 0; i < ratings.length; i++) {
 					if(preferred[moves.get(i)[0]][moves.get(i)[1]]){
 						ratings[i] = gamma;
+						System.out.println("index "+i+" is preferred.");
 					}else{
 						ratings[i] = (1-gamma*inter)/(numPref-inter);
 					}
 				}
 			}
+			System.out.println(Arrays.toString(ratings));
 			return ratings;
 		}
 		
