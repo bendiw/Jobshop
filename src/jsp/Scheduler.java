@@ -130,11 +130,8 @@ public class Scheduler {
 
 	}
 	
-<<<<<<< HEAD
-	private static List<int[]> buildScheduleBee(int[] chromosome, Problem p) {
-=======
+
 	public static List<int[]> buildScheduleBee(int[] chromosome, Problem p) {
->>>>>>> refs/remotes/origin/master
 		int[][] process = p.getProcMatrix();
 		int[][] machine = p.getMachMatrix();
 		int jobs = p.getNumJobs();
@@ -205,16 +202,11 @@ public class Scheduler {
 		while (true) {
 			List<Integer> block = new ArrayList<Integer>();
 			while (true) {
-<<<<<<< HEAD
-				block.add(0, getOpNr(latestJob, machines, task[latestJob]));
-				task[latestJob] --;
-=======
 				if(scheduleTask == 0){
 					break;
 				}
 				block.add(0, getOpNr(latestJob, machines, task[latestJob]--));
 //				System.out.println(scheduleTask);
->>>>>>> refs/remotes/origin/master
 				if (endTime[machine][scheduleTask-1]  != startTime[machine][scheduleTask]) {
 					criticalPath.add(0, block);
 					break;
@@ -327,14 +319,10 @@ public class Scheduler {
 		return buildScheduleBee(chrom, p);
 	}
 	
-<<<<<<< HEAD
-	public static int[] getAttract(List<int[]> moves, Problem p, int[] operations) {
-		int[] attract = new int[moves.size()];
-=======
+
 	public static double[] getAttract(ArrayList<int[]> moves, Problem p, int[] oper) {
 		double[] attract = new double[moves.size()];
 		int[] operations = oper.clone();
->>>>>>> refs/remotes/origin/master
 		int counter = 0;
 		for (int[] move : moves) {
 			int[] oldT = buildScheduleAttract(makeChrom(operations, p), p, move, false);
