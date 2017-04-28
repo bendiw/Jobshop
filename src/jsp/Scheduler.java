@@ -242,7 +242,7 @@ public class Scheduler {
 		return criticalPath;
 	}
 	
-	private static int[] buildScheduleAttract(int[] chromosome, Problem p, int[] move, boolean flipped) {
+	private static int[] buildScheduleAttract(int[] chromosome, Problem p, int[] move) {
 		int[][] process = p.getProcMatrix();
 		int[][] machine = p.getMachMatrix();
 		int jobs = p.getNumJobs();
@@ -265,12 +265,6 @@ public class Scheduler {
 			tNext[i] ++;
 			sNext[j] ++;
 		}
-		if (flipped) {
-			int a = move[0];
-			int b = move[1];
-			move[0] = b;
-			move[1] = a;			
-		}
 		int job1 = Math.floorDiv(move[0], machines);
 		int job2 = Math.floorDiv(move[1], machines);
 		int task1 = move[0]%machines;
@@ -284,7 +278,7 @@ public class Scheduler {
 			}
 		}
 		if (task1 < machines-1) {
-			nextMachine = machine[job1][task1];
+			nextMachine = machine[job1][task1+1];
 			for (int i = 0; i < jobs; i++) {
 				if (schedule[nextMachine][i] == job1) {
 					sTimes[1] = startTime[nextMachine][i];
@@ -293,7 +287,7 @@ public class Scheduler {
 			}
 		}
 		if (task2 < machines-1) {
-			nextMachine = machine[job2][task2];
+			nextMachine = machine[job2][task2+1];
 			for (int i = 0; i < jobs; i++) {
 				if (schedule[nextMachine][i] == job2) {
 					sTimes[2] = startTime[nextMachine][i];
@@ -329,14 +323,14 @@ public class Scheduler {
 		int[] operations = oper.clone();
 		int counter = 0;
 		for (int[] move : moves) {
-			int[] oldT = buildScheduleAttract(makeChrom(operations, p), p, move, false);
+			int[] oldT = buildScheduleAttract(makeChrom(operations, p), p, move);
 			for (int i = 0; i < operations.length; i++) {
 				if (operations[i] == move[0])
 					operations[i] = move[1];
 				else if (operations[i] == move[1])
 					operations[i] = move[0];
 			}
-			int[] newT = buildScheduleAttract(makeChrom(operations, p), p, move, true);
+			int[] newT = buildScheduleAttract(makeChrom(operations, p), p, move);
 			double sum = 0;
 			for (int i = 0; i < 3; i++) {
 				sum += (oldT[i]-newT[i]);
