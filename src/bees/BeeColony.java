@@ -35,10 +35,14 @@ public class BeeColony {
 	private int numMachs;
 	private Random r;
 	private Scheduler s;
+	private ArrayList<Integer> indexes;
+	private double pSwap;
+	private double pInsert;
+	private double pInvert;
 	
 	
 	
-	public BeeColony(Problem p, double alpha, double beta, double rating, double waggleProb) {
+	public BeeColony(Problem p, double alpha, double beta, double rating, double waggleProb, double pSwap, double pInsert, double pInvert) {
 		this.p = p;
 		this.alpha = alpha;
 		this.beta = beta;
@@ -47,13 +51,17 @@ public class BeeColony {
 		this.waggleProb = waggleProb;
 		this.eliteMax = eliteMax;
 		this.iter = iter;
+		this.pSwap = pSwap;
+		this.pInsert = pInsert;
+		this.pInvert = pInvert;
 		this.followProb = new double[]{0.6, 0.2, 0.02, 0};
 		r = new Random();
-		init();
+		indexes = new ArrayList<Integer>();
+		for (int i = 1; i < p.getNumJobs()*p.getNumMachines(); i++) {
+			indexes.add(i);
+		}
 	}
 	
-	private void init(){
-	}
 	
 	private ArrayList<int[]> generateInitSol(int bees){
 		ArrayList<int[]> chromos = new ArrayList<int[]>();
@@ -69,8 +77,6 @@ public class BeeColony {
 		return chromos;
 	}
 	
-	private void setProfit(int bee) {
-	}
 	
 	private EnumeratedIntegerDistribution getDistr(Bee bee){
 		int[] choices = new int[bee.getMoves().size()];
@@ -112,7 +118,7 @@ public class BeeColony {
 	}
 
 	
-	private void run(int iterations, int bees, double probDance) throws IOException {
+	private void run(int iterations, int bees, double probDance, double endTemp, double cooling, double MIEprob) throws IOException {
 		ArrayList<int[]> initChromos = generateInitSol(bees);
 		ArrayList<Bee> colony = new ArrayList<Bee>();
 		for (int i = 0; i < bees; i++) {
@@ -130,12 +136,20 @@ public class BeeColony {
 			double[] prof = new double[colony.size()];
 			double avgProf = 0;
 			double avgSpan = 0;
+			Bee globBee = null;
 			for (int j = 0; j < colony.size(); j++) {
 				Bee bee = colony.get(j);
 				boolean glob = false;
 				boolean iterb = false;
 				int[] schedule = Scheduler.buildSchedule(normalizeArray(bee.getChromo()),p);
 				int makeSpan = Scheduler.makespanFitness(schedule);
+				double mie = r.nextDouble();
+				if(mie <= MIEprob){
+					double initTemp = makeSpan-globBest+10;
+					MIE(bee, makeSpan, initTemp, endTemp, cooling);
+				}
+				schedule = Scheduler.buildSchedule(normalizeArray(bee.getChromo()),p);
+				makeSpan = Scheduler.makespanFitness(schedule);
 				if(makeSpan < globBest){
 					globBest = makeSpan;
 					bestChromo = bee.getChromo();
@@ -150,13 +164,18 @@ public class BeeColony {
 				double q = r.nextDouble();
 				double beeProf = 1/(double)makeSpan;
 				prof[j] = beeProf;
-				if(q<waggleProb || iterb){
+				
+				if((q<waggleProb || iterb)){
 					dancers.add(bee);
 					danceProf.add(beeProf);
 					avgProf+= beeProf;
 					avgSpan += (double) makeSpan;
 				}
 			}
+//			dancers.add(globBee);
+//			danceProf.add(beeProf);
+//			avgProf+= beeProf;
+//			avgSpan += (double) makeSpan;
 			int recruited = 0;
 			if(dancers.size()>0){
 				double avgProf2 = avgProf/(double)dancers.size();
@@ -180,12 +199,7 @@ public class BeeColony {
 			}
 //			System.out.println("iteration best: "+iterBest);
 		}
-<<<<<<< HEAD
 		System.out.println("Best: "+globBest);
-=======
-		System.out.println("\t Best: "+globBest);
-		Scheduler.buildScheduleGantt(normalizeArray(bestChromo), p);
->>>>>>> refs/remotes/origin/master
 	}
 	public int[] normalizeArray(int[] val){
 		int[] normalized = new int[p.getNumJobs()*p.getNumMachines()];
@@ -208,9 +222,9 @@ public class BeeColony {
 //				System.out.println("before:"+makeSpan);
 //				System.out.println(Arrays.toString(bee.getChromo()));
 				bee.move(move);
+//				Arrays.sort(sorted);
 //				System.out.println(Arrays.toString(bee.getChromo()));
 //				System.out.println("after:"+makeSpan);
-				ArrayList<int[]> moves = bee.getMoves();
 				bee.updateMoves(p);
 				if(bees.indexOf(bee)==0){
 //					System.out.println("move: "+Arrays.toString(move));
@@ -238,22 +252,126 @@ public class BeeColony {
 			return 0;
 		}
 	
+	private void MIE(Bee bee, int fitness, double startTemp, double endTemp, double cooling){
+//		double[] position = prt.getPosition().clone();
+		int[] position = Arrays.copyOf(bee.getChromo(), bee.getChromo().length);
+//		int[] jobArray = Utils.getJobArray(position, p.getNumJobs());
+		double temperature = startTemp;
+		while(temperature > endTemp){
+			Collections.shuffle(indexes);
+			double q = r.nextDouble();
+			if(q<=pSwap){
+				position = swap(position);
+			}
+			else if(q>pSwap && q <=pInsert+pSwap){
+				position =  insert(position);
+			}
+			else if(q>pInsert+pSwap && q<pInsert+pSwap+pInvert){
+				invert(position);
+			}else{
+				longMov(position);
+			}
+			int[] chromo = normalizeArray(position);
+//			System.out.println(Arrays.toString(position));
+//			System.out.println(Arrays.toString(chromo));
+			int[] schedule = Scheduler.buildSchedule(chromo,p);
+			int newFitness = Scheduler.makespanFitness(schedule);
+			if(newFitness <= fitness){
+				bee.setChromo(position, p);
+//				prt.setPosition(position);
+//				prt.updateFitness(newFitness);
+			}else{
+				double delta = newFitness-fitness;
+				double rand = r.nextDouble();
+				double accept = Math.exp(-(delta/temperature))*1;
+				if(rand < Math.min(1, accept)){
+//					prt.setPosition(position);
+//					prt.updateFitness(newFitness);
+					bee.setChromo(position, p);
+				}
+			}
+			temperature = temperature*cooling;
+			bee.updateIndexes();
+		}
+	}
+	
+	private int[] swap(int[] position){
+		boolean swapped = false;
+		int index = indexes.get(0);
+		int count = 1;
+		while(!swapped){
+			int swapIndex = indexes.get(count);
+			count++;
+			if(position[index]!=position[swapIndex]){
+				int temp = new Integer(position[index]);
+				position[index] = new Integer(position[swapIndex]);
+				position[swapIndex] = temp;
+				swapped = true;
+			}
+		}
+		return position;
+	}
+	
+	private int[] insert(int[] position){
+		ArrayList<Integer> temp = new ArrayList<Integer>();
+		for (int i = 0; i < position.length; i++) {
+			temp.add(position[i]);
+		}
+		int index = indexes.get(0);
+		int insIndex = indexes.get(1);
+		temp.add(insIndex, position[index]);
+		if(insIndex < index){
+			index+=1;
+		}
+		temp.remove(index);
+		for (int i = 0; i < position.length; i++) {
+			position[i] = temp.get(i);
+		}
+		return position;
+	}
+	
+	private int[] invert(int[] position){
+		int indexOne = indexes.get(0);
+		int indexTwo = indexes.get(1);
+		int firstIndex = Math.min(indexOne, indexTwo);
+		int secondIndex = Math.max(indexOne,indexTwo);
+		ArrayUtils.reverse(position, firstIndex, secondIndex+1);
+		return position;
+	}
+	
+	private int[] longMov(int[] position){
+		ArrayList<Integer> tempList = new ArrayList<Integer>();
+		ArrayList<Integer> tempList2 = new ArrayList<Integer>();
+		for (int i = 0; i < position.length; i++) {
+			tempList.add(position[i]);
+		}
+		int indexOne = indexes.get(0);
+		int indexTwo = indexes.get(1);
+		int firstIndex = Math.min(indexOne, indexTwo);
+		int secondIndex = Math.max(indexOne,indexTwo);
+		for (int i = firstIndex; i < secondIndex; i++) {
+			tempList2.add(tempList.remove(firstIndex));
+		}
+		int insert = 0;
+		if(tempList.size()!=0){
+			insert = r.nextInt(tempList.size())+1;
+		}
+		tempList.addAll(insert, tempList2);
+		for (int i = 0; i < position.length; i++) {
+			position[i] = tempList.get(i);
+		}
+		return position;
+	}
+	
 	public static void main(String[] args) throws IOException {
-<<<<<<< HEAD
-		Problem p = ProblemCreator.create("2.txt");
-		BeeColony bc = new BeeColony(p, 1, 1, 0.008, 0.01);
-//		ArrayList<int[]> c = bc.generateInitSol(30);
-//		System.out.println(Arrays.toString(c.get(0)));
-//		System.out.println(Arrays.toString(c.get(1)));
-		bc.run(300, 100, 0.01);
-=======
-		Problem p = ProblemCreator.create("1.txt");
-		BeeColony bc = new BeeColony(p, 1, 1,0.99,0.01);
+		Problem p = ProblemCreator.create("3.txt");
+		BeeColony bc = new BeeColony(p, 1, 1,0.99,0.01, 0.4, 0.4, 0.1);
 		ArrayList<int[]> c = bc.generateInitSol(30);
 		System.out.println(Arrays.toString(c.get(0)));
 		System.out.println(Arrays.toString(c.get(1)));
-		bc.run(2, 50000, 0.01);
->>>>>>> refs/remotes/origin/master
+		for (int i = 0; i < 20; i++) {
+			bc.run(15, 10000, 0.01, 0.1, 0.97, 0.001);
+		}
 	}
 	
 	public static class Bee{
@@ -278,6 +396,12 @@ public class BeeColony {
 				indexes[chromosome[i]] = i;
 			}
 			preferred = new boolean[p.getNumJobs()*p.getNumMachines()][p.getNumJobs()*p.getNumMachines()];
+		}
+		
+		public void updateIndexes(){
+			for (int i = 0; i < chromosome.length; i++) {
+				indexes[chromosome[i]] = i;
+			}
 		}
 		
 		
@@ -344,6 +468,11 @@ public class BeeColony {
 		
 		public int getMovesMade(){
 			return this.movesMade;
+		}
+		
+		public void setChromo(int[] chromo, Problem p){
+			this.chromosome = chromo;
+			updateMoves(p);
 		}
 		
 		public void move(int[] move){

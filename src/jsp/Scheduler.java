@@ -336,7 +336,7 @@ public class Scheduler {
 			int[] newT = buildScheduleAttract(makeChrom(operations, p), p, move);
 			double sum = 0;
 			for (int i = 0; i < 3; i++) {
-				sum += (oldT[i]-newT[i]);
+				sum += (newT[i]-oldT[i]);
 			}
 			if(sum <=0){
 				attract[counter] = -sum;
