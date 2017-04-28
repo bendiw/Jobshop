@@ -110,7 +110,7 @@ public class BeeColony {
 	}
 
 	
-	private void run(int iterations, int bees, double probDance) {
+	private void run(int iterations, int bees, double probDance) throws IOException {
 		ArrayList<int[]> initChromos = generateInitSol(bees);
 		ArrayList<Bee> colony = new ArrayList<Bee>();
 		for (int i = 0; i < bees; i++) {
@@ -167,6 +167,7 @@ public class BeeColony {
 //			System.out.println("iteration best: "+iterBest);
 		}
 		System.out.println("\t Best: "+globBest);
+		Scheduler.buildScheduleGantt(normalizeArray(bestChromo), p);
 	}
 	public int[] normalizeArray(int[] val){
 		int[] normalized = new int[p.getNumJobs()*p.getNumMachines()];
@@ -207,12 +208,12 @@ public class BeeColony {
 		}
 	
 	public static void main(String[] args) throws IOException {
-		Problem p = ProblemCreator.create("3.txt");
+		Problem p = ProblemCreator.create("1.txt");
 		BeeColony bc = new BeeColony(p, 1, 1,0.99,0.01);
 		ArrayList<int[]> c = bc.generateInitSol(30);
 		System.out.println(Arrays.toString(c.get(0)));
 		System.out.println(Arrays.toString(c.get(1)));
-		bc.run(25, 5000, 0.01);
+		bc.run(2, 50000, 0.01);
 	}
 	
 	public static class Bee{

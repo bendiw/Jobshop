@@ -123,10 +123,10 @@ public class Scheduler {
 		Runtime.getRuntime().exec(cmd);
 
 		
-		Gantt gantt = new Gantt("JSP", schedule, startTime, process, machine, p);
-		gantt.pack();
-		RefineryUtilities.centerFrameOnScreen(gantt);
-		gantt.setVisible(true);
+//		Gantt gantt = new Gantt("JSP", schedule, startTime, process, machine, p);
+//		gantt.pack();
+//		RefineryUtilities.centerFrameOnScreen(gantt);
+//		gantt.setVisible(true);
 
 	}
 	
@@ -160,18 +160,19 @@ public class Scheduler {
 		List<int[]> moves = new ArrayList<int[]>();
 		for (int i = 0; i < criticalPath.size(); i++) {
 			List<Integer> block = criticalPath.get(i);
+			int[] move = new int[2];
 			if (i != 0 && block.size() > 1) {
-				int[] move = new int[2];
 				move[0] = block.get(0);
 				move[1] = block.get(1);
 				moves.add(0, move);
 			}
-			if (i != criticalPath.size()-1 && block.size() > 1) {
-				int[] move = new int[2];
-				int size = block.size();
-				move[0] = block.get(size-2);
-				move[1] = block.get(size-1);
-				moves.add(0, move);
+			if (! (move[0]+move[1] > 0 && block.size() == 2)) {
+				if (i != criticalPath.size()-1 && block.size() > 1) {
+					int size = block.size();
+					move[0] = block.get(size-2);
+					move[1] = block.get(size-1);
+					moves.add(0, move);
+				}
 			}
 		}
 		return moves;
