@@ -40,45 +40,54 @@ public class PSO {
 		Particle[] swarm = new Particle[swarmSize];
 		double vLim = p.getNumJobs()*p.getNumMachines()*0.1;
 		for (int i = 0; i < swarmSize; i++) {
-			Particle prt = new Particle(r,p.getNumJobs(),p.getNumMachines(), 2, 2, vLim, -vLim); //fix values
+			Particle prt = new Particle(r,p.getNumJobs(),p.getNumMachines(), 2.0, 2.0, vLim, -vLim); //fix values
 			swarm[i] = prt;
 		}
 		double inertia = maxInertia;
 		int globalBest = Integer.MAX_VALUE;
 		double[] bestPos= null;
-		int[] bestChromo = null;
+		double[] bestChromo = null;
 		boolean changed;
 		for (int i = 0; i < iterations; i++) {
+			int iterBest = Integer.MAX_VALUE;
+			double sumSpan = 0;
 //			System.out.println("speed: "+Arrays.toString(swarm[0].getVelocity()));
 //			System.out.println("position: "+Arrays.toString(swarm[0].getPosition()));
 			changed = false;
 			//calc fitness
-			if (i % 10 == 0)
-				System.out.println("Iteration: "+i+"\t Global best: "+globalBest);
 			for (int j = 0; j < swarm.length; j++) {
-				int fit = calcFitness(swarm[j].getPosition());
+//				int fit = calcFitness(swarm[j].getPosition());
+				int[] oldChrom = Utils.getJobArray(swarm[j].getPosition(),p.getNumJobs(), false);
+				int[] giffChrom = Scheduler.giffThomp(oldChrom, p);
+				int[] jobGiff = Utils.normalizeArray(giffChrom, p.getNumMachines(), p.getNumJobs());
+				int[] giffSchedule = Scheduler.buildSchedule(jobGiff, this.p);
+//				int[] normSchedule = Scheduler.buildSchedule(oldChrom, p);
+				int fit = Scheduler.makespanFitness(giffSchedule);
+				
 				swarm[j].updateFitness(fit);
 				double mie = r.nextDouble();
 				if(mie <= MIEprob){
 					double initTemp = fit-globalBest;
-					MIE(swarm[j], fit, initTemp, endTemp, cooling);
+					fit = MIE(swarm[j], fit, initTemp, endTemp, cooling);
 				}
-				fit = calcFitness(swarm[j].getPosition());
+//				oldChrom = Utils.getJobArray(swarm[j].getPosition(),p.getNumJobs(), false);
+//				giffChrom = Scheduler.giffThomp(oldChrom, p);
+//				jobGiff = Utils.normalizeArray(giffChrom, p.getNumMachines(), p.getNumJobs());
+//				giffSchedule = Scheduler.buildSchedule(jobGiff, this.p);
+////				int[] normSchedule = Scheduler.buildSchedule(oldChrom, p);
+//				fit = Scheduler.makespanFitness(giffSchedule);
+//				fit = calcFitness(swarm[j].getPosition());
+//				swarm[j].updateFitness(fit);
+				sumSpan+= fit;
+				if(fit<iterBest){
+					iterBest = fit;
+				}
 				if(fit < globalBest){
-					int[] chromo = Utils.getJobArray(swarm[j].getPosition(), p.getNumJobs(), false);
-//					int[] giff2 = Scheduler.giffThomp2(chromo, p);
-					int[] giff = Scheduler.giffThomp(chromo, p);
-//					int[] giff2sch = Scheduler.buildSchedule(Utils.normalizeArray(giff2, p.getNumMachines(), p.getNumJobs()), p);
-//					int[] giffsch = Scheduler.buildSchedule(Utils.normalizeArray(giff, p.getNumMachines(), p.getNumJobs()), p);
-//					int[] normsch = Scheduler.buildSchedule(chromo, p);
-//					int giff2span = Scheduler.makespanFitness(giff2sch);
-//					int giffspan = Scheduler.makespanFitness(giffsch);
-//					int normspan = Scheduler.makespanFitness(normsch);
-//					System.out.println("giff2: "+giff2span+"\t giff: "+giffspan+"\t norm: "+normspan);
 					changed = true;
+//					System.out.println("particle #"+j+" found new best sol");
 					globalBest = fit;
-					bestPos = swarm[j].getPosition();
-					bestChromo = giff;
+					bestPos = Arrays.copyOf(swarm[j].getPosition(), swarm[j].getPosition().length);
+					bestChromo = swarm[j].getPosition();
 //					bestChromo = Utils.getJobArray(swarm[j].getPosition(), p.getNumJobs());
 //					bestChromo = swarm[j].getJobArray();
 				}
@@ -91,8 +100,14 @@ public class PSO {
 			if(changed){
 				System.out.println("Iteration: "+i+"\tGlobal best: "+globalBest);
 			}
+			if (i % 10 == 0){
+				sumSpan = sumSpan/swarm.length;
+				System.out.println("Iteration: "+i+"\t Global best: "+globalBest+"\t Iter best: "+iterBest+"\t Iter avg: "+sumSpan);
+//				System.out.println("best position vector: "+Arrays.toString(bestPos));
+			}
 		}
 //		int[] schedule = Scheduler.buildSchedule(bestChromo, p);
+		
 		int[] normChrom = Utils.normalizeArray(bestChromo, p.getNumMachines(), p.getNumJobs());
 		Scheduler.buildScheduleGantt(normChrom, p);
 		System.out.println("Best makespan: "+globalBest);
@@ -114,7 +129,7 @@ public class PSO {
 	}
 	
 	
-	private void MIE(Particle prt, int fitness, double startTemp, double endTemp, double cooling) throws IOException{
+	private int MIE(Particle prt, int fitness, double startTemp, double endTemp, double cooling) throws IOException{
 //		double[] position = prt.getPosition().clone();
 		int initFit = fitness;
 		double[] position = Arrays.copyOf(prt.getPosition(), prt.getPosition().length);
@@ -127,12 +142,12 @@ public class PSO {
 				position = swap(position, jobArray);
 			}
 			else if(q>pSwap && q <=pInsert+pSwap){
-				position =  insert(position, jobArray);
+				position =  insert(position);
 			}
 			else if(q>pInsert+pSwap && q<=pInsert+pSwap+pInvert)
-				invert(position, jobArray);
+				invert(position);
 			else
-				longMov(position, jobArray);
+				longMov(position);
 			int newFitness = calcFitness(position);
 			if(newFitness <= initFit){
 				initFit = newFitness;
@@ -150,6 +165,7 @@ public class PSO {
 			}
 			temperature = temperature*cooling;
 		}
+		return initFit;
 	}
 	
 	private double[] swap(double[] position, int[] jobArray){
@@ -169,7 +185,7 @@ public class PSO {
 		return position;
 	}
 	
-	private double[] insert(double[] position, int[] jobArray){
+	private double[] insert(double[] position){
 		ArrayList<Double> temp = new ArrayList<Double>();
 		for (int i = 0; i < position.length; i++) {
 			temp.add(position[i]);
@@ -194,7 +210,7 @@ public class PSO {
 		return position;
 	}
 	
-	private double[] invert(double[] position, int[] jobArray){
+	private double[] invert(double[] position){
 		int indexOne = indexes.get(0);
 		int indexTwo = indexes.get(1);
 		int firstIndex = Math.min(indexOne, indexTwo);
@@ -203,7 +219,7 @@ public class PSO {
 		return position;
 	}
 	
-	private double[] longMov(double[] position, int[] jobArray){
+	private double[] longMov(double[] position){
 		ArrayList<Double> tempList = new ArrayList<Double>();
 		ArrayList<Double> tempList2 = new ArrayList<Double>();
 		for (int i = 0; i < position.length; i++) {
@@ -238,7 +254,7 @@ public class PSO {
 		Problem p = ProblemCreator.create("5.txt");
 		PSO pso = new PSO(p, 0.4,0.4,0.1);
 		for (int i = 0; i < 1; i++) {
-			pso.run(300, 70,1.4, 0.4, 0.01, 0.1, 0.97);
+			pso.run(1000, 70,1.4, 0.2, 0.01, 0.1, 0.97);
 		}
 	}
 	
