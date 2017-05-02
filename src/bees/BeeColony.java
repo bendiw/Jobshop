@@ -171,14 +171,18 @@ public class BeeColony {
 				Bee bee = colony.get(j);
 				boolean glob = false;
 				boolean iterb = false;
-				int[] schedule = Scheduler.buildSchedule(normalizeArray(bee.getChromo()),p);
+				int[] giffChrom = Scheduler.giffThomp(bee.getChromo(), p);
+				giffChrom = Utils.normalizeArray(giffChrom, p.getNumMachines(), p.getNumJobs());
+				int[] schedule = Scheduler.buildSchedule(giffChrom,p);
 				int makeSpan = Scheduler.makespanFitness(schedule);
 				double mie = r.nextDouble();
 				if(mie <= MIEprob){
 					double initTemp = makeSpan-globBest+10;
 					MIE(bee, makeSpan, initTemp, endTemp, cooling);
 				}
-				schedule = Scheduler.buildSchedule(normalizeArray(bee.getChromo()),p);
+				giffChrom = Scheduler.giffThomp(bee.getChromo(), p);
+				giffChrom = Utils.normalizeArray(giffChrom, p.getNumMachines(), p.getNumJobs());
+				schedule = Scheduler.buildSchedule(giffChrom,p);
 				makeSpan = Scheduler.makespanFitness(schedule);
 				if(makeSpan < globBest){
 					globBest = makeSpan;
@@ -318,11 +322,13 @@ public class BeeColony {
 			}else{
 				longMov(position);
 			}
-			int[] chromo = normalizeArray(position);
+//			int[] chromo = normalizeArray(position);
+			int[] giffChrom = Scheduler.giffThomp(position, p);
+			giffChrom = Utils.normalizeArray(giffChrom, p.getNumMachines(), p.getNumJobs());
+			int[] schedule = Scheduler.buildSchedule(giffChrom,p);
+			int newFitness = Scheduler.makespanFitness(schedule);
 //			System.out.println(Arrays.toString(position));
 //			System.out.println(Arrays.toString(chromo));
-			int[] schedule = Scheduler.buildSchedule(chromo,p);
-			int newFitness = Scheduler.makespanFitness(schedule);
 			if(newFitness <= fitness){
 				bee.setChromo(position, p);
 //				prt.setPosition(position);
@@ -412,13 +418,13 @@ public class BeeColony {
 	
 	public static void main(String[] args) throws IOException {
 
-		Problem p = ProblemCreator.create("3.txt");
-		BeeColony bc = new BeeColony(p, 1, 1,0.99,0.03, 0.4, 0.4, 0.1); //waggle was 0.01 w/o ratio multiplic
+		Problem p = ProblemCreator.create("2.txt");
+		BeeColony bc = new BeeColony(p, 1, 1, 0.99, 0.03, 0.4, 0.4, 0.1); //waggle was 0.01 w/o ratio multiplic
 		ArrayList<int[]> c = bc.generateInitSol(30);
 		System.out.println(Arrays.toString(c.get(0)));
 		System.out.println(Arrays.toString(c.get(1)));
 		for (int i = 0; i < 1; i++) {
-			bc.run(100, 10000, 0.01, 0.1, 0.97, 0.00);
+			bc.run(1000, 20, 0.01, 0.1, 0.97, 0.0);
 		}
 	}
 	

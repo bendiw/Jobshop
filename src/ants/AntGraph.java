@@ -103,7 +103,7 @@ public class AntGraph {
 			
 			for (Ant ant : ants) {
 				int[] path = ant.path;
-				int[] chromo = normalizeArray(ant.path);
+//				int[] chromo = normalizeArray(ant.path);
 //				System.out.println("Chromo before: "+Arrays.toString(chromo));
 				int[] newChrom = Arrays.copyOfRange(ant.path, 1, ant.path.length);
 				int[] giffUnNorm = Scheduler.giffThomp(newChrom, p);
