@@ -9,18 +9,24 @@ public class Utils {
 	public static int[] getJobArray(double[] position, int jobs){
 		int[] jobArray = new int[position.length];
 		double[] posCopy = position.clone();
-		int[] indexArray = new int[position.length];
+//		int[] indexArray = new int[position.length];
 		Arrays.sort(posCopy);
-//		System.out.println(Arrays.toString(this.position));
-//		System.out.println(Arrays.toString(posCopy));
 		for (int i = 0; i < jobArray.length; i++) {
 			int index = ArrayUtils.indexOf(posCopy,position[i]);
-			indexArray[i] = index;
-			jobArray[i] = index%(jobs);
+//			indexArray[i] = index;
+			jobArray[i] = ((index+1)%(jobs));
 		}
 //		System.out.println(Arrays.toString(indexArray));
 //		System.out.println(Arrays.toString(jobArray));
 		return jobArray;
+	}
+	
+	public static int[] normalizeArray(int[] val, int machines, int jobs){
+		int[] normalized = new int[machines*jobs];
+		for (int i = 0; i < val.length; i++) {
+			normalized[i] = Math.floorDiv(val[i], machines);
+		}
+		return normalized;
 	}
 	
 	public static void shuffleArray(int[] array)

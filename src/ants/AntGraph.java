@@ -104,12 +104,24 @@ public class AntGraph {
 			for (Ant ant : ants) {
 				int[] path = ant.path;
 				int[] chromo = normalizeArray(ant.path);
+//				System.out.println("Chromo before: "+Arrays.toString(chromo));
+				int[] newChrom = Arrays.copyOfRange(ant.path, 1, ant.path.length);
+				int[] giffUnNorm = Scheduler.giffThomp(newChrom, p);
+				int[] giffChromo = Utils.normalizeArray(giffUnNorm, p.getNumMachines(), p.getNumJobs());
+//				System.out.println("Chromo unnormalized: "+Arrays.toString(giffUnNorm));
+
+//				System.out.println("Chromo after: "+Arrays.toString(chromo));
 //				System.out.println("path: "+Arrays.toString(path));
 //				System.out.println(Arrays.toString(chromo));
 //				System.out.println("length: "+chromo.length);
 //				System.out.println(Arrays.toString(chromo));
 				int[] schedule = Scheduler.buildSchedule(chromo,p);
+				int[] giffSched = Scheduler.buildSchedule(giffChromo, p);
 				int antSpan = Scheduler.makespanFitness(schedule);
+				int antSpanGiff = Scheduler.makespanFitness(giffSched);
+//				System.out.println("giff: "+antSpanGiff);
+//				System.out.println("norm: "+antSpan);
+				antSpan = Math.min(antSpan, antSpanGiff);
 				double mie = r.nextDouble();
 				if(mie <= MIEprob){
 					double initTemp = antSpan-globalBestSpan+10;
@@ -422,9 +434,9 @@ public class AntGraph {
 	}
 	
 	public static void main(String[] args) throws IOException {
-		Problem p = ProblemCreator.create("2.txt");
+		Problem p = ProblemCreator.create("5.txt");
 		AntGraph a = new AntGraph(p, 2, 0.03, 0.1, 0, 1, 100, 0.001, 0.4, 0.4, 0.1); //decay was 0.01
-		a.run(4000, 300, 0, 0.1, 0.97);
+		a.run(2000, 150, 0.0, 0.1, 0.97);
 	}
 
 	
