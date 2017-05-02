@@ -6,7 +6,7 @@ import java.util.Random;
 import org.apache.commons.lang3.ArrayUtils;
 
 public class Utils {
-	public static int[] getJobArray(double[] position, int jobs){
+	public static int[] getJobArray(double[] position, int jobs, boolean toJobs){
 		int[] jobArray = new int[position.length];
 		double[] posCopy = position.clone();
 //		int[] indexArray = new int[position.length];
@@ -14,7 +14,10 @@ public class Utils {
 		for (int i = 0; i < jobArray.length; i++) {
 			int index = ArrayUtils.indexOf(posCopy,position[i]);
 //			indexArray[i] = index;
-			jobArray[i] = ((index+1)%(jobs));
+			if (toJobs)
+				jobArray[i] = ((index+1)%(jobs));
+			else
+				jobArray[i] = index;
 		}
 //		System.out.println(Arrays.toString(indexArray));
 //		System.out.println(Arrays.toString(jobArray));

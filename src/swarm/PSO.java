@@ -53,6 +53,8 @@ public class PSO {
 //			System.out.println("position: "+Arrays.toString(swarm[0].getPosition()));
 			changed = false;
 			//calc fitness
+			if (i % 10 == 0)
+				System.out.println("Iteration: "+i+"\t Global best: "+globalBest);
 			for (int j = 0; j < swarm.length; j++) {
 				int fit = calcFitness(swarm[j].getPosition());
 				swarm[j].updateFitness(fit);
@@ -63,7 +65,7 @@ public class PSO {
 				}
 				fit = calcFitness(swarm[j].getPosition());
 				if(fit < globalBest){
-					int[] chromo = Utils.getJobArray(swarm[j].getPosition(), p.getNumJobs());
+					int[] chromo = Utils.getJobArray(swarm[j].getPosition(), p.getNumJobs(), false);
 //					int[] giff2 = Scheduler.giffThomp2(chromo, p);
 					int[] giff = Scheduler.giffThomp(chromo, p);
 //					int[] giff2sch = Scheduler.buildSchedule(Utils.normalizeArray(giff2, p.getNumMachines(), p.getNumJobs()), p);
@@ -76,7 +78,8 @@ public class PSO {
 					changed = true;
 					globalBest = fit;
 					bestPos = swarm[j].getPosition();
-					bestChromo = Utils.getJobArray(swarm[j].getPosition(), p.getNumJobs());
+					bestChromo = giff;
+//					bestChromo = Utils.getJobArray(swarm[j].getPosition(), p.getNumJobs());
 //					bestChromo = swarm[j].getJobArray();
 				}
 			}
@@ -89,24 +92,25 @@ public class PSO {
 				System.out.println("Iteration: "+i+"\tGlobal best: "+globalBest);
 			}
 		}
-		int[] schedule = Scheduler.buildSchedule(bestChromo, p);
-		Scheduler.buildScheduleGantt(bestChromo, p);
+//		int[] schedule = Scheduler.buildSchedule(bestChromo, p);
+		int[] normChrom = Utils.normalizeArray(bestChromo, p.getNumMachines(), p.getNumJobs());
+		Scheduler.buildScheduleGantt(normChrom, p);
 		System.out.println("Best makespan: "+globalBest);
-		System.out.println(Arrays.toString(bestChromo));
+		System.out.println(Arrays.toString(normChrom));
 	}
 	
 	public int calcFitness(double[] position) throws IOException{
-		int[] oldChrom = Utils.getJobArray(position,p.getNumJobs());
-//		int[] giffChrom = Scheduler.giffThomp(oldChrom, p);
-//		int[] jobGiff = Utils.normalizeArray(giffChrom, p.getNumMachines(), p.getNumJobs());
-//		int[] giffSchedule = Scheduler.buildSchedule(jobGiff, this.p);
-		int[] normSchedule = Scheduler.buildSchedule(oldChrom, p);
-//		int giffSpan = Scheduler.makespanFitness(giffSchedule);
-		int normSpan = Scheduler.makespanFitness(normSchedule);
+		int[] oldChrom = Utils.getJobArray(position,p.getNumJobs(), false);
+		int[] giffChrom = Scheduler.giffThomp(oldChrom, p);
+		int[] jobGiff = Utils.normalizeArray(giffChrom, p.getNumMachines(), p.getNumJobs());
+		int[] giffSchedule = Scheduler.buildSchedule(jobGiff, this.p);
+//		int[] normSchedule = Scheduler.buildSchedule(oldChrom, p);
+		int giffSpan = Scheduler.makespanFitness(giffSchedule);
+//		int normSpan = Scheduler.makespanFitness(normSchedule);
 		
 //		int makeSpan = Math.min(giffSpan, normSpan);
 //		return makeSpan;
-		return normSpan;
+		return giffSpan;
 	}
 	
 	
@@ -114,7 +118,7 @@ public class PSO {
 //		double[] position = prt.getPosition().clone();
 		int initFit = fitness;
 		double[] position = Arrays.copyOf(prt.getPosition(), prt.getPosition().length);
-		int[] jobArray = Utils.getJobArray(position, p.getNumJobs());
+		int[] jobArray = Utils.getJobArray(position, p.getNumJobs(), true);
 		double temperature = startTemp;
 		while(temperature > endTemp){
 			Collections.shuffle(indexes);
@@ -231,10 +235,10 @@ public class PSO {
 	}
 	
 	public static void main(String[] args) throws IOException {
-		Problem p = ProblemCreator.create("3.txt");
+		Problem p = ProblemCreator.create("5.txt");
 		PSO pso = new PSO(p, 0.4,0.4,0.1);
 		for (int i = 0; i < 1; i++) {
-			pso.run(1000, 100 ,1.4, 0.4, 0.01, 0.1, 0.97);
+			pso.run(300, 70,1.4, 0.4, 0.01, 0.1, 0.97);
 		}
 	}
 	
