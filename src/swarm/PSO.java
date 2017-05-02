@@ -87,7 +87,7 @@ public class PSO {
 //					System.out.println("particle #"+j+" found new best sol");
 					globalBest = fit;
 					bestPos = Arrays.copyOf(swarm[j].getPosition(), swarm[j].getPosition().length);
-					bestChromo = swarm[j].getPosition();
+					bestChromo = bestPos;
 //					bestChromo = Utils.getJobArray(swarm[j].getPosition(), p.getNumJobs());
 //					bestChromo = swarm[j].getJobArray();
 				}
@@ -108,10 +108,14 @@ public class PSO {
 		}
 //		int[] schedule = Scheduler.buildSchedule(bestChromo, p);
 		
-		int[] normChrom = Utils.normalizeArray(bestChromo, p.getNumMachines(), p.getNumJobs());
-		Scheduler.buildScheduleGantt(normChrom, p);
-		System.out.println("Best makespan: "+globalBest);
+		int[] normChrom = Utils.getJobArray(bestChromo, p.getNumJobs(), false);
 		System.out.println(Arrays.toString(normChrom));
+		int[] giffChrom = Scheduler.giffThomp(normChrom, p);
+		giffChrom = Utils.normalizeArray(giffChrom, p.getNumMachines(), p.getNumJobs());
+		System.out.println(Arrays.toString(giffChrom));
+//		int[] giffSchedule = Scheduler.buildSchedule(giffChrom, p);
+		Scheduler.buildScheduleGantt(giffChrom, p);
+		System.out.println("Best makespan: "+globalBest);
 	}
 	
 	public int calcFitness(double[] position) throws IOException{
@@ -251,10 +255,10 @@ public class PSO {
 	}
 	
 	public static void main(String[] args) throws IOException {
-		Problem p = ProblemCreator.create("5.txt");
+		Problem p = ProblemCreator.create("6.txt");
 		PSO pso = new PSO(p, 0.4,0.4,0.1);
 		for (int i = 0; i < 1; i++) {
-			pso.run(1000, 70,1.4, 0.2, 0.01, 0.1, 0.97);
+			pso.run(2000, 70,1.4, 0.2, 0.01, 0.1, 0.97);
 		}
 	}
 	
