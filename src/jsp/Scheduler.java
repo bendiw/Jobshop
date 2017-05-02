@@ -2,6 +2,7 @@ package jsp;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.jfree.ui.ApplicationFrame;
@@ -10,6 +11,64 @@ import org.jfree.ui.RefineryUtilities;
 import jsp.ProblemCreator.Problem;
 
 public class Scheduler {
+	
+	public static int[] giffThomp(int[]chromosome, Problem p) {
+		int[][] machine = p.getMachMatrix();
+		int jobs = p.getNumJobs();
+		int machines = p.getNumMachines();
+		int[] jobStart = new int[jobs];
+		int[] machStart = new int[machines];
+		
+		int t = 0;
+		int[] P = new int[chromosome.length];
+		List<Integer> S = new ArrayList<Integer>();
+		for (int i = 0; i < jobs; i++) {
+			S.add(i*machines);
+		}
+		
+		while (! S.isEmpty()) {
+			int b = Integer.MAX_VALUE;
+			int M = 0;
+			int finish = 0;
+			for (Integer op : S) {
+				int j = getJob(op, machines);
+				int jt = getJobTask(op, machines);
+				int m = machine[j][jt];
+				finish = Math.min(jobStart[j], machStart[m]) + p.getJobs().get(j).getProcessTime(m);
+				if (finish < b) {
+					M = m;
+					b = finish;
+				}
+			}
+			int chosenOp = 0;
+			for (Integer op : S) {
+				int j = getJob(op, machines);
+				int jt = getJobTask(op, machines);
+				int m = machine[j][jt];
+				if (m == M && Math.min(jobStart[j], machStart[m]) < finish) {
+					chosenOp = op;
+					int processtime = p.getJobs().get(j).getProcessTime(m);
+					jobStart[j] += processtime;
+					machStart[m] += processtime;
+					break;
+				}
+			}
+			P[t] = chosenOp;
+			S.remove(S.indexOf(chosenOp));
+			if (getJobTask(chosenOp, machines) < machines)
+				S.add(chosenOp+1);
+			t ++;
+		}
+		return P;
+	}
+	
+	private static int getJob(int op, int machines) {
+		return Math.floorDiv(op, machines);
+	}
+	
+	private static int getJobTask(int op, int machines) {
+		return op % machines;
+	}
 	
 	public static int[] buildSchedule(int[] chromosome, Problem p) {
 		int[][] process = p.getProcMatrix();
@@ -335,14 +394,18 @@ public class Scheduler {
 			}
 			int[] newT = buildScheduleAttract(makeChrom(operations, p), p, move);
 			double sum = 0;
+//			System.out.println(Arrays.toString(oldT));
+//			System.out.println(Arrays.toString(newT));
 			for (int i = 0; i < 3; i++) {
 				sum += (newT[i]-oldT[i]);
 			}
+//			System.out.println(sum);
 			if(sum <=0){
 				attract[counter] = -sum;
 			}else{
 				attract[counter] = 1/sum;
 			}
+//			System.out.println(attract[counter]+"\n");
 			counter ++;
 		}
 		return attract;
