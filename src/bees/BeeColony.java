@@ -417,8 +417,8 @@ public class BeeColony {
 		ArrayList<int[]> c = bc.generateInitSol(30);
 		System.out.println(Arrays.toString(c.get(0)));
 		System.out.println(Arrays.toString(c.get(1)));
-		for (int i = 0; i < 20; i++) {
-			bc.run(35, 300, 0.01, 0.1, 0.97, 0.01);
+		for (int i = 0; i < 1; i++) {
+			bc.run(100, 10000, 0.01, 0.1, 0.97, 0.00);
 		}
 	}
 	
