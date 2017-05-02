@@ -68,6 +68,20 @@ public class Scheduler {
 					int processtime = p.getJobs().get(j).getProcessTime(m);
 					jobStart[j] += processtime;
 					machStart[m] += processtime;
+					bestStart = start;
+				} else if (m == M && start < b && start == bestStart) {
+					for (Integer chromOp : chromosome) {
+						if (chromOp == op) {
+							chosenOp = op;
+							int processtime = p.getJobs().get(j).getProcessTime(m);
+							jobStart[j] += processtime;
+							machStart[m] += processtime;
+							bestStart = start;
+							break;
+						} else if (chromOp == operation){
+							break;
+						}
+					}
 				}
 			}
 			P[t] = chosenOp;
