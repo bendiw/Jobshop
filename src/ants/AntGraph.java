@@ -104,6 +104,10 @@ public class AntGraph {
 			for (Ant ant : ants) {
 				int[] path = ant.path;
 				int[] chromo = normalizeArray(ant.path);
+//				System.out.println("Chromo before: "+Arrays.toString(chromo));
+				int[] newChrom = Arrays.copyOfRange(ant.path, 1, ant.path.length);
+				chromo = normalizeArray(Scheduler.giffThomp(newChrom, p));
+//				System.out.println("Chromo after: "+Arrays.toString(chromo));
 //				System.out.println("path: "+Arrays.toString(path));
 //				System.out.println(Arrays.toString(chromo));
 //				System.out.println("length: "+chromo.length);
@@ -422,9 +426,9 @@ public class AntGraph {
 	}
 	
 	public static void main(String[] args) throws IOException {
-		Problem p = ProblemCreator.create("2.txt");
+		Problem p = ProblemCreator.create("1.txt");
 		AntGraph a = new AntGraph(p, 2, 0.03, 0.1, 0, 1, 100, 0.001, 0.4, 0.4, 0.1); //decay was 0.01
-		a.run(4000, 300, 0, 0.1, 0.97);
+		a.run(100, 300, 0, 0.1, 0.97);
 	}
 
 	

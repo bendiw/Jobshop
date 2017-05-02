@@ -33,6 +33,9 @@ public class Scheduler {
 			for (Integer op : S) {
 				int j = getJob(op, machines);
 				int jt = getJobTask(op, machines);
+//				System.out.println("op: "+op);
+//				System.out.println("j: "+j);
+//				System.out.println("jt: "+jt);
 				int m = machine[j][jt];
 				finish = Math.min(jobStart[j], machStart[m]) + p.getJobs().get(j).getProcessTime(m);
 				if (finish < b) {
@@ -55,7 +58,7 @@ public class Scheduler {
 			}
 			P[t] = chosenOp;
 			S.remove(S.indexOf(chosenOp));
-			if (getJobTask(chosenOp, machines) < machines)
+			if (getJobTask(chosenOp, machines) < machines-1)
 				S.add(chosenOp+1);
 			t ++;
 		}
