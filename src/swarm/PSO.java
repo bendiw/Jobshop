@@ -81,7 +81,12 @@ public class PSO {
 	}
 	
 	public int calcFitness(double[] position){
-		int[] schedule = Scheduler.buildSchedule(Utils.getJobArray(position,p.getNumJobs()), this.p);
+		int[] oldChrom = Utils.getJobArray(position,p.getNumJobs());
+		int[] giffChrom = Scheduler.giffThomp(oldChrom, p);
+		int[] jobGiff = Utils.normalizeArray(giffChrom, p.getNumMachines(), p.getNumJobs());
+		System.out.println("input was: "+Arrays.toString(oldChrom));
+		System.out.println("output from giff: "+Arrays.toString(jobGiff));
+		int[] schedule = Scheduler.buildSchedule(jobGiff, this.p);
 		return Scheduler.makespanFitness(schedule);
 	}
 	
@@ -190,7 +195,7 @@ public class PSO {
 	}
 	
 	public static void main(String[] args) throws IOException {
-		Problem p = ProblemCreator.create("2.txt");
+		Problem p = ProblemCreator.create("1.txt");
 		PSO pso = new PSO(p, 0.4,0.4,0.1);
 		for (int i = 0; i < 20; i++) {
 			pso.run(1000, 400,1.4, 0.4, 0.03, 0.1, 0.97); //startinertia was 1.4

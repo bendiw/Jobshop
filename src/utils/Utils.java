@@ -23,6 +23,14 @@ public class Utils {
 		return jobArray;
 	}
 	
+	public static int[] normalizeArray(int[] val, int machines, int jobs){
+		int[] normalized = new int[machines*jobs];
+		for (int i = 0; i < val.length; i++) {
+			normalized[i] = Math.floorDiv(val[i], machines);
+		}
+		return normalized;
+	}
+	
 	public static void shuffleArray(int[] array)
 	{
 	    int index, temp;

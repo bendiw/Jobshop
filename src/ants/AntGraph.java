@@ -107,7 +107,7 @@ public class AntGraph {
 //				System.out.println("Chromo before: "+Arrays.toString(chromo));
 				int[] newChrom = Arrays.copyOfRange(ant.path, 1, ant.path.length);
 				chromo = normalizeArray(Scheduler.giffThomp(newChrom, p));
-//				System.out.println("Chromo after: "+Arrays.toString(chromo));
+//				System.out.println("Chromo after: "+Arrays.toString(newChrom));
 //				System.out.println("path: "+Arrays.toString(path));
 //				System.out.println(Arrays.toString(chromo));
 //				System.out.println("length: "+chromo.length);
