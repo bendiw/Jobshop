@@ -208,12 +208,12 @@ public class BeeColony {
 		}
 	
 	public static void main(String[] args) throws IOException {
-		Problem p = ProblemCreator.create("1.txt");
+		Problem p = ProblemCreator.create("5.txt");
 		BeeColony bc = new BeeColony(p, 1, 1,0.99,0.01);
 		ArrayList<int[]> c = bc.generateInitSol(30);
 		System.out.println(Arrays.toString(c.get(0)));
 		System.out.println(Arrays.toString(c.get(1)));
-		bc.run(2, 50000, 0.01);
+		bc.run(30, 20000, 0.01);
 	}
 	
 	public static class Bee{
