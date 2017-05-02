@@ -159,12 +159,12 @@ public class AntGraph {
 //			System.out.println(Arrays.toString(ants.get(1).path));
 //			System.out.println(Arrays.toString(ants.get(2).path));
 		}
-		for (int j = 0; j < pheromone[0].length; j++) {
-			for (int j2 = 0; j2 < pheromone[1].length; j2++) {
-				System.out.print(pheromone[j][j2]+"\t");
-			}
-			System.out.println("");
-		}
+//		for (int j = 0; j < pheromone[0].length; j++) {
+//			for (int j2 = 0; j2 < pheromone[1].length; j2++) {
+//				System.out.print(pheromone[j][j2]+"\t");
+//			}
+//			System.out.println("");
+//		}
 		Scheduler.buildScheduleGantt(globalBestChromo, p);
 		System.out.println(globalBestChromo.length);
 		System.out.println("chromo: "+Arrays.toString(globalBestChromo));
@@ -434,9 +434,9 @@ public class AntGraph {
 	}
 	
 	public static void main(String[] args) throws IOException {
-		Problem p = ProblemCreator.create("5.txt");
+		Problem p = ProblemCreator.create("6.txt");
 		AntGraph a = new AntGraph(p, 2, 0.03, 0.1, 0, 1, 100, 0.001, 0.4, 0.4, 0.1); //decay was 0.01
-		a.run(1000, 20, 0.0, 0.1, 0.97);
+		a.run(1000, 150, 0.0, 0.1, 0.97);
 	}
 
 	

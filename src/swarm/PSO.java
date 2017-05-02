@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+
 import utils.Utils;
 
 import org.apache.commons.lang3.ArrayUtils;
@@ -53,8 +54,7 @@ public class PSO {
 //			System.out.println("position: "+Arrays.toString(swarm[0].getPosition()));
 			changed = false;
 			//calc fitness
-			if (i % 10 == 0)
-				System.out.println("Iteration: "+i+"\t Global best: "+globalBest);
+			int bestSpan = Integer.MAX_VALUE;
 			for (int j = 0; j < swarm.length; j++) {
 				int fit = calcFitness(swarm[j].getPosition());
 				swarm[j].updateFitness(fit);
@@ -64,6 +64,8 @@ public class PSO {
 					MIE(swarm[j], fit, initTemp, endTemp, cooling);
 				}
 				fit = calcFitness(swarm[j].getPosition());
+				if (fit < bestSpan)
+					bestSpan = fit;
 				if(fit < globalBest){
 					int[] chromo = Utils.getJobArray(swarm[j].getPosition(), p.getNumJobs(), false);
 //					int[] giff2 = Scheduler.giffThomp2(chromo, p);
@@ -88,8 +90,8 @@ public class PSO {
 			for (int j = 0; j < swarm.length; j++) {
 				swarm[j].move(bestPos, inertia);
 			}
-			if(changed){
-				System.out.println("Iteration: "+i+"\tGlobal best: "+globalBest);
+			if(changed || i % 10 == 0){
+				System.out.println("Iteration: "+i+"\tGlobal best: "+globalBest +"\tBest of iteration: "+bestSpan);
 			}
 		}
 //		int[] schedule = Scheduler.buildSchedule(bestChromo, p);
@@ -235,10 +237,10 @@ public class PSO {
 	}
 	
 	public static void main(String[] args) throws IOException {
-		Problem p = ProblemCreator.create("5.txt");
+		Problem p = ProblemCreator.create("6.txt");
 		PSO pso = new PSO(p, 0.4,0.4,0.1);
 		for (int i = 0; i < 1; i++) {
-			pso.run(300, 70,1.4, 0.4, 0.01, 0.1, 0.97);
+			pso.run(10000, 100,1.4, 0.4, 0.00, 0.1, 0.97);
 		}
 	}
 	
