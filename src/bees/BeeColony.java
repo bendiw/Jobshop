@@ -411,6 +411,7 @@ public class BeeColony {
 	}
 	
 	public static void main(String[] args) throws IOException {
+
 		Problem p = ProblemCreator.create("3.txt");
 		BeeColony bc = new BeeColony(p, 1, 1,0.99,0.03, 0.4, 0.4, 0.1); //waggle was 0.01 w/o ratio multiplic
 		ArrayList<int[]> c = bc.generateInitSol(30);
