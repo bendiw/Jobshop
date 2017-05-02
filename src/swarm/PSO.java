@@ -63,9 +63,9 @@ public class PSO {
 				}
 				fit = calcFitness(swarm[j].getPosition());
 				if(fit < globalBest){
-//					int[] chromo = Utils.getJobArray(swarm[j].getPosition(), p.getNumJobs());
+					int[] chromo = Utils.getJobArray(swarm[j].getPosition(), p.getNumJobs());
 //					int[] giff2 = Scheduler.giffThomp2(chromo, p);
-//					int[] giff = Scheduler.giffThomp(chromo, p);
+					int[] giff = Scheduler.giffThomp(chromo, p);
 //					int[] giff2sch = Scheduler.buildSchedule(Utils.normalizeArray(giff2, p.getNumMachines(), p.getNumJobs()), p);
 //					int[] giffsch = Scheduler.buildSchedule(Utils.normalizeArray(giff, p.getNumMachines(), p.getNumJobs()), p);
 //					int[] normsch = Scheduler.buildSchedule(chromo, p);
@@ -97,11 +97,11 @@ public class PSO {
 	
 	public int calcFitness(double[] position) throws IOException{
 		int[] oldChrom = Utils.getJobArray(position,p.getNumJobs());
-		int[] giffChrom = Scheduler.giffThomp(oldChrom, p);
-		int[] jobGiff = Utils.normalizeArray(giffChrom, p.getNumMachines(), p.getNumJobs());
-		int[] giffSchedule = Scheduler.buildSchedule(jobGiff, this.p);
+//		int[] giffChrom = Scheduler.giffThomp(oldChrom, p);
+//		int[] jobGiff = Utils.normalizeArray(giffChrom, p.getNumMachines(), p.getNumJobs());
+//		int[] giffSchedule = Scheduler.buildSchedule(jobGiff, this.p);
 		int[] normSchedule = Scheduler.buildSchedule(oldChrom, p);
-		int giffSpan = Scheduler.makespanFitness(giffSchedule);
+//		int giffSpan = Scheduler.makespanFitness(giffSchedule);
 		int normSpan = Scheduler.makespanFitness(normSchedule);
 		
 //		int makeSpan = Math.min(giffSpan, normSpan);
@@ -135,7 +135,7 @@ public class PSO {
 				prt.setPosition(position);
 				prt.updateFitness(newFitness);
 			}else{
-				double delta = newFitness-fitness;
+				double delta = newFitness-initFit;
 				double rand = r.nextDouble();
 				double accept = Math.exp(-(delta/temperature))*1;
 				if(rand < Math.min(1, accept)){
@@ -231,10 +231,10 @@ public class PSO {
 	}
 	
 	public static void main(String[] args) throws IOException {
-		Problem p = ProblemCreator.create("1.txt");
+		Problem p = ProblemCreator.create("3.txt");
 		PSO pso = new PSO(p, 0.4,0.4,0.1);
 		for (int i = 0; i < 1; i++) {
-			pso.run(100, 300 ,1.4, 0.4, 0.01, 0.1, 0.97);
+			pso.run(1000, 100 ,1.4, 0.4, 0.01, 0.1, 0.97);
 		}
 	}
 	
