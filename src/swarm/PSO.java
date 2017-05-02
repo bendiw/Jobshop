@@ -40,7 +40,7 @@ public class PSO {
 		Particle[] swarm = new Particle[swarmSize];
 		double vLim = p.getNumJobs()*p.getNumMachines()*0.1;
 		for (int i = 0; i < swarmSize; i++) {
-			Particle prt = new Particle(r,p.getNumJobs(),p.getNumMachines(),2,2,vLim,-vLim); //fix values
+			Particle prt = new Particle(r,p.getNumJobs(),p.getNumMachines(), 2, 2, vLim, -vLim); //fix values
 			swarm[i] = prt;
 		}
 		double inertia = maxInertia;
@@ -49,6 +49,8 @@ public class PSO {
 		int[] bestChromo = null;
 		boolean changed;
 		for (int i = 0; i < iterations; i++) {
+//			System.out.println("speed: "+Arrays.toString(swarm[0].getVelocity()));
+//			System.out.println("position: "+Arrays.toString(swarm[0].getPosition()));
 			changed = false;
 			//calc fitness
 			for (int j = 0; j < swarm.length; j++) {
@@ -59,7 +61,18 @@ public class PSO {
 					double initTemp = fit-globalBest;
 					MIE(swarm[j], fit, initTemp, endTemp, cooling);
 				}
+				fit = calcFitness(swarm[j].getPosition());
 				if(fit < globalBest){
+//					int[] chromo = Utils.getJobArray(swarm[j].getPosition(), p.getNumJobs());
+//					int[] giff2 = Scheduler.giffThomp2(chromo, p);
+//					int[] giff = Scheduler.giffThomp(chromo, p);
+//					int[] giff2sch = Scheduler.buildSchedule(Utils.normalizeArray(giff2, p.getNumMachines(), p.getNumJobs()), p);
+//					int[] giffsch = Scheduler.buildSchedule(Utils.normalizeArray(giff, p.getNumMachines(), p.getNumJobs()), p);
+//					int[] normsch = Scheduler.buildSchedule(chromo, p);
+//					int giff2span = Scheduler.makespanFitness(giff2sch);
+//					int giffspan = Scheduler.makespanFitness(giffsch);
+//					int normspan = Scheduler.makespanFitness(normsch);
+//					System.out.println("giff2: "+giff2span+"\t giff: "+giffspan+"\t norm: "+normspan);
 					changed = true;
 					globalBest = fit;
 					bestPos = swarm[j].getPosition();
@@ -77,8 +90,9 @@ public class PSO {
 			}
 		}
 		int[] schedule = Scheduler.buildSchedule(bestChromo, p);
-//		Scheduler.buildScheduleGantt(bestChromo, p);
+		Scheduler.buildScheduleGantt(bestChromo, p);
 		System.out.println("Best makespan: "+globalBest);
+		System.out.println(Arrays.toString(bestChromo));
 	}
 	
 	public int calcFitness(double[] position) throws IOException{
@@ -90,8 +104,9 @@ public class PSO {
 		int giffSpan = Scheduler.makespanFitness(giffSchedule);
 		int normSpan = Scheduler.makespanFitness(normSchedule);
 		
-		int makeSpan = Math.min(giffSpan, normSpan);
-		return makeSpan;
+//		int makeSpan = Math.min(giffSpan, normSpan);
+//		return makeSpan;
+		return normSpan;
 	}
 	
 	
@@ -217,16 +232,9 @@ public class PSO {
 	
 	public static void main(String[] args) throws IOException {
 		Problem p = ProblemCreator.create("1.txt");
-//		double[] vec = new double[]{1.3, 0.7, 2.4, 1.1, 3.4, 5.3};
-//		System.out.println(Arrays.toString(Utils.getJobArray(vec, 3)));
 		PSO pso = new PSO(p, 0.4,0.4,0.1);
-		double[] pos = new double[]{1.1, 4.2, 6.4, 3.1, 2.3, 5.7};
-		double[] newPos = pso.insert(Arrays.copyOf(pos, pos.length), Utils.getJobArray(pos, 3));
-//		double[] newPos = pso.longMov(Arrays.copyOf(pos,pos.length), new int[]{0});
-		System.out.println("old: "+Arrays.toString(pos));
-		System.out.println("new: "+Arrays.toString(newPos));
-		for (int i = 0; i < 10; i++) {
-			pso.run(300, 30 ,1.4, 0.4, 0.01, 0.1, 0.97); //startinertia was 1.4
+		for (int i = 0; i < 1; i++) {
+			pso.run(100, 300 ,1.4, 0.4, 0.01, 0.1, 0.97);
 		}
 	}
 	
@@ -235,6 +243,7 @@ public class PSO {
 		private double[] position;
 		private Random r;
 		private int jobs;
+		private int machines;
 		private int bestFitness;
 		private double[] bestPosition;
 		private int currFitness;
@@ -247,6 +256,7 @@ public class PSO {
 		public Particle(Random r, int jobs, int machines, double selfLearn, double socialLearn, double vMax, double vMin){
 			this.r = r;
 			this.jobs = jobs;
+			this.machines = machines;
 			this.vMin = vMin;
 			this.vMax = vMax;
 			this.selfLearn = selfLearn;
@@ -273,6 +283,10 @@ public class PSO {
 			this.position = position;
 		}
 		
+		public double[] getVelocity(){
+			return this.velocity;
+		}
+		
 
 		public void updateFitness(int fitness){
 			this.currFitness = fitness;
@@ -292,6 +306,9 @@ public class PSO {
 					velocity[i] = vMax;
 				}
 				position[i] += velocity[i];
+//				int max = jobs*machines;
+//				if(position[i]>max)
+//					position[i] = max;
 			}
 		}
 	}

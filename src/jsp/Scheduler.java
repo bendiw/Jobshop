@@ -256,8 +256,8 @@ public class Scheduler {
 		
 		String[] cmd = {
 				"python",
-				"C:\\Users\\agmal_000\\git\\Jobshop\\gantt.py",
-//				"C:\\Users\\Bendik\\git\\Jobshop\\gantt.py",
+//				"C:\\Users\\agmal_000\\git\\Jobshop\\gantt.py",
+				"C:\\Users\\Bendik\\git\\Jobshop\\gantt.py",
 				numJobs,
 				numMachs,
 				scheduleString.substring(0, scheduleString.length()-1),
