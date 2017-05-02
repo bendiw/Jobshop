@@ -434,7 +434,7 @@ public class AntGraph {
 	}
 	
 	public static void main(String[] args) throws IOException {
-		Problem p = ProblemCreator.create("5.txt");
+		Problem p = ProblemCreator.create("6.txt");
 		AntGraph a = new AntGraph(p, 2, 0.03, 0.1, 0, 1, 100, 0.001, 0.4, 0.4, 0.1); //decay was 0.01
 		a.run(1000, 20, 0.0, 0.1, 0.97);
 	}
