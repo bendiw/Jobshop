@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 
 import org.jfree.ui.ApplicationFrame;
 import org.jfree.ui.RefineryUtilities;
@@ -11,6 +12,57 @@ import org.jfree.ui.RefineryUtilities;
 import jsp.ProblemCreator.Problem;
 
 public class Scheduler {
+	
+	public static int[] giffThomp2(int[] chromosome, Problem p) {
+		int[][] machine = p.getMachMatrix();
+		int jobs = p.getNumJobs();
+		int machines = p.getNumMachines();
+		int[] jobStart = new int[jobs];
+		int[] machStart = new int[machines];
+		
+		int t = 0;
+		int[] P = new int[chromosome.length];
+		List<Integer> S = new ArrayList<Integer>();
+		for (int i = 0; i < jobs; i++) {
+			S.add(i*machines);
+		}
+		while (! S.isEmpty()) {
+			int b = Integer.MAX_VALUE;
+			int operation = 0;
+			for (Integer op : S) {
+				int j = getJob(op, machines);
+				int jt = getJobTask(op, machines);
+				int m = machine[j][jt];
+				int start = Math.max(jobStart[j], machStart[m]);
+				if (start < b) {
+					b = start;
+					operation = op;
+				} else if (start == b) {
+					for (Integer chromOp : chromosome) {
+						if (chromOp == op) {
+							b = start;
+							operation = op;
+							break;
+						} else if (chromOp == operation){
+							break;
+						}
+					}
+				}
+			}
+			int j = getJob(operation, machines);
+			int jt = getJobTask(operation, machines);
+			int m = machine[j][jt];
+			int processtime = p.getJobs().get(j).getProcessTime(m);
+			jobStart[j] += processtime;
+			machStart[m] += processtime;
+			P[t] = operation;
+			S.remove(S.indexOf(operation));
+			if (getJobTask(operation, machines) < machines-1)
+				S.add(operation+1);
+			t ++;
+		}
+		return P;
+	}
 	
 	public static int[] giffThomp(int[]chromosome, Problem p) {
 		int[][] machine = p.getMachMatrix();
@@ -26,7 +78,7 @@ public class Scheduler {
 			S.add(i*machines);
 		}
 		
-		while (! S.isEmpty()) {
+		while (! S.isEmpty()) {			
 			int b = Integer.MAX_VALUE;
 			int M = 0;
 			int finish = 0;
@@ -56,6 +108,7 @@ public class Scheduler {
 					}
 				}
 			}
+			
 			int chosenOp = 0;
 			int bestStart = Integer.MAX_VALUE;
 			for (Integer op : S) {
@@ -203,8 +256,8 @@ public class Scheduler {
 		
 		String[] cmd = {
 				"python",
-//				"C:\\Users\\agmal_000\\git\\Jobshop\\gantt.py",
-				"C:\\Users\\Bendik\\git\\Jobshop\\gantt.py",
+				"C:\\Users\\agmal_000\\git\\Jobshop\\gantt.py",
+//				"C:\\Users\\Bendik\\git\\Jobshop\\gantt.py",
 				numJobs,
 				numMachs,
 				scheduleString.substring(0, scheduleString.length()-1),
