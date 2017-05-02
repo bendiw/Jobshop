@@ -34,6 +34,9 @@ public class Scheduler {
 			for (Integer op : S) {
 				int j = getJob(op, machines);
 				int jt = getJobTask(op, machines);
+//				System.out.println("op: "+op);
+//				System.out.println("j: "+j);
+//				System.out.println("jt: "+jt);
 				int m = machine[j][jt];
 				finish = Math.max(jobStart[j], machStart[m]) + p.getJobs().get(j).getProcessTime(m);
 				if (finish < b) {
@@ -62,17 +65,11 @@ public class Scheduler {
 				int start  = Math.max(jobStart[j], machStart[m]);
 				if (m == M && start < b && start < bestStart) {
 					chosenOp = op;
-					int processtime = p.getJobs().get(j).getProcessTime(m);
-					jobStart[j] += processtime;
-					machStart[m] += processtime;
 					bestStart = start;
 				} else if (m == M && start < b && start == bestStart) {
 					for (Integer chromOp : chromosome) {
 						if (chromOp == op) {
 							chosenOp = op;
-							int processtime = p.getJobs().get(j).getProcessTime(m);
-							jobStart[j] += processtime;
-							machStart[m] += processtime;
 							bestStart = start;
 							break;
 						} else if (chromOp == operation){
@@ -81,6 +78,12 @@ public class Scheduler {
 					}
 				}
 			}
+			int j = getJob(chosenOp, machines);
+			int jt = getJobTask(chosenOp, machines);
+			int m = machine[j][jt];
+			int processtime = p.getJobs().get(j).getProcessTime(m);
+			jobStart[j] += processtime;
+			machStart[m] += processtime;
 			P[t] = chosenOp;
 			S.remove(S.indexOf(chosenOp));
 			if (getJobTask(chosenOp, machines) < machines-1)
