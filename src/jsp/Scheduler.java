@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 
 import org.jfree.ui.ApplicationFrame;
 import org.jfree.ui.RefineryUtilities;
@@ -11,6 +12,90 @@ import org.jfree.ui.RefineryUtilities;
 import jsp.ProblemCreator.Problem;
 
 public class Scheduler {
+	
+	private static List<Integer> restrictActive(int[] chromosome, Problem p, List<Integer> S, int[] jobStart, int[] machStart) {
+		int[][] machine = p.getMachMatrix();
+		int machines = p.getNumMachines();
+		int b = Integer.MAX_VALUE;
+		int finish = 0;
+		List<Integer> rOps = new ArrayList<Integer>();
+		for (Integer op : S) {
+			int j = getJob(op, machines);
+			int jt = getJobTask(op, machines);
+			int m = machine[j][jt];
+			finish = Math.max(jobStart[j], machStart[m]) + p.getJobs().get(j).getProcessTime(m);
+			if (finish < b) {
+				rOps.clear();
+				rOps.add(op);
+				b = finish;
+			} else if (finish == b) {
+				rOps.add(op);
+			}
+		}
+		Random r = new Random();
+		int chosenOp = rOps.get(r.nextInt(rOps.size()));
+		int j = getJob(chosenOp, machines);
+		int jt = getJobTask(chosenOp, machines);
+		int M = machine[j][jt];
+		List<Integer> ops = new ArrayList<Integer>();
+		for (Integer op : rOps) {
+			j = getJob(op, machines);
+			jt = getJobTask(op, machines);
+			int m = machine[j][jt];
+			if (m == M && Math.max(jobStart[j], machStart[m]) < b) {
+				ops.add(op);
+			}
+		}
+		return ops;
+	}
+	
+	public static int[] giffThomp2(int[] chromosome, Problem p) {
+		int[][] machine = p.getMachMatrix();
+		int jobs = p.getNumJobs();
+		int machines = p.getNumMachines();
+		int[] jobStart = new int[jobs];
+		int[] machStart = new int[machines];
+		
+		int t = 0;
+		int[] P = new int[chromosome.length];
+		List<Integer> S = new ArrayList<Integer>();
+		for (int i = 0; i < jobs; i++) {
+			S.add(i*machines);
+		}
+		while (! S.isEmpty()) {
+			int b = Integer.MAX_VALUE;
+			int M = 0;
+			int operation = 0;
+			for (Integer op : S) {
+				int j = getJob(op, machines);
+				int jt = getJobTask(op, machines);
+				int m = machine[j][jt];
+				int start = Math.max(jobStart[j], machStart[m]);
+				if (start < b) {
+					M = m;
+					b = start;
+					operation = op;
+				} else if (start == b) {
+					for (Integer chromOp : chromosome) {
+						if (chromOp == op) {
+							M = m;
+							b = start;
+							operation = op;
+							break;
+						} else if (chromOp == operation){
+							break;
+						}
+					}
+				}
+			}
+			P[t] = operation;
+			S.remove(S.indexOf(operation));
+			if (getJobTask(operation, machines) < machines-1)
+				S.add(operation+1);
+			t ++;
+		}
+		return P;
+	}
 	
 	public static int[] giffThomp(int[]chromosome, Problem p) {
 		int[][] machine = p.getMachMatrix();
@@ -26,7 +111,7 @@ public class Scheduler {
 			S.add(i*machines);
 		}
 		
-		while (! S.isEmpty()) {
+		while (! S.isEmpty()) {			
 			int b = Integer.MAX_VALUE;
 			int M = 0;
 			int finish = 0;
@@ -53,6 +138,7 @@ public class Scheduler {
 					}
 				}
 			}
+			
 			int chosenOp = 0;
 			int bestStart = Integer.MAX_VALUE;
 			for (Integer op : S) {
