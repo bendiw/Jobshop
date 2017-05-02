@@ -30,14 +30,27 @@ public class Scheduler {
 			int b = Integer.MAX_VALUE;
 			int M = 0;
 			int finish = 0;
+			int operation = 0;
 			for (Integer op : S) {
 				int j = getJob(op, machines);
 				int jt = getJobTask(op, machines);
 				int m = machine[j][jt];
-				finish = Math.min(jobStart[j], machStart[m]) + p.getJobs().get(j).getProcessTime(m);
+				finish = Math.max(jobStart[j], machStart[m]) + p.getJobs().get(j).getProcessTime(m);
 				if (finish < b) {
 					M = m;
 					b = finish;
+					operation = op;
+				} else if (finish == b) {
+					for (Integer chromOp : chromosome) {
+						if (chromOp == op) {
+							M = m;
+							b = finish;
+							operation = op;
+							break;
+						} else if (chromOp == operation){
+							break;
+						}
+					}
 				}
 			}
 			int chosenOp = 0;
@@ -45,7 +58,7 @@ public class Scheduler {
 				int j = getJob(op, machines);
 				int jt = getJobTask(op, machines);
 				int m = machine[j][jt];
-				if (m == M && Math.min(jobStart[j], machStart[m]) < finish) {
+				if (m == M && Math.max(jobStart[j], machStart[m]) < finish) {
 					chosenOp = op;
 					int processtime = p.getJobs().get(j).getProcessTime(m);
 					jobStart[j] += processtime;
@@ -55,7 +68,7 @@ public class Scheduler {
 			}
 			P[t] = chosenOp;
 			S.remove(S.indexOf(chosenOp));
-			if (getJobTask(chosenOp, machines) < machines)
+			if (getJobTask(chosenOp, machines) < machines-1)
 				S.add(chosenOp+1);
 			t ++;
 		}
