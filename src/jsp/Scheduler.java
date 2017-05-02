@@ -13,42 +13,6 @@ import jsp.ProblemCreator.Problem;
 
 public class Scheduler {
 	
-	private static List<Integer> restrictActive(int[] chromosome, Problem p, List<Integer> S, int[] jobStart, int[] machStart) {
-		int[][] machine = p.getMachMatrix();
-		int machines = p.getNumMachines();
-		int b = Integer.MAX_VALUE;
-		int finish = 0;
-		List<Integer> rOps = new ArrayList<Integer>();
-		for (Integer op : S) {
-			int j = getJob(op, machines);
-			int jt = getJobTask(op, machines);
-			int m = machine[j][jt];
-			finish = Math.max(jobStart[j], machStart[m]) + p.getJobs().get(j).getProcessTime(m);
-			if (finish < b) {
-				rOps.clear();
-				rOps.add(op);
-				b = finish;
-			} else if (finish == b) {
-				rOps.add(op);
-			}
-		}
-		Random r = new Random();
-		int chosenOp = rOps.get(r.nextInt(rOps.size()));
-		int j = getJob(chosenOp, machines);
-		int jt = getJobTask(chosenOp, machines);
-		int M = machine[j][jt];
-		List<Integer> ops = new ArrayList<Integer>();
-		for (Integer op : rOps) {
-			j = getJob(op, machines);
-			jt = getJobTask(op, machines);
-			int m = machine[j][jt];
-			if (m == M && Math.max(jobStart[j], machStart[m]) < b) {
-				ops.add(op);
-			}
-		}
-		return ops;
-	}
-	
 	public static int[] giffThomp2(int[] chromosome, Problem p) {
 		int[][] machine = p.getMachMatrix();
 		int jobs = p.getNumJobs();
@@ -64,7 +28,6 @@ public class Scheduler {
 		}
 		while (! S.isEmpty()) {
 			int b = Integer.MAX_VALUE;
-			int M = 0;
 			int operation = 0;
 			for (Integer op : S) {
 				int j = getJob(op, machines);
@@ -72,13 +35,11 @@ public class Scheduler {
 				int m = machine[j][jt];
 				int start = Math.max(jobStart[j], machStart[m]);
 				if (start < b) {
-					M = m;
 					b = start;
 					operation = op;
 				} else if (start == b) {
 					for (Integer chromOp : chromosome) {
 						if (chromOp == op) {
-							M = m;
 							b = start;
 							operation = op;
 							break;
@@ -88,6 +49,12 @@ public class Scheduler {
 					}
 				}
 			}
+			int j = getJob(operation, machines);
+			int jt = getJobTask(operation, machines);
+			int m = machine[j][jt];
+			int processtime = p.getJobs().get(j).getProcessTime(m);
+			jobStart[j] += processtime;
+			machStart[m] += processtime;
 			P[t] = operation;
 			S.remove(S.indexOf(operation));
 			if (getJobTask(operation, machines) < machines-1)
@@ -289,8 +256,8 @@ public class Scheduler {
 		
 		String[] cmd = {
 				"python",
-//				"C:\\Users\\agmal_000\\git\\Jobshop\\gantt.py",
-				"C:\\Users\\Bendik\\git\\Jobshop\\gantt.py",
+				"C:\\Users\\agmal_000\\git\\Jobshop\\gantt.py",
+//				"C:\\Users\\Bendik\\git\\Jobshop\\gantt.py",
 				numJobs,
 				numMachs,
 				scheduleString.substring(0, scheduleString.length()-1),
