@@ -57,16 +57,17 @@ public class Scheduler {
 				}
 			}
 			int chosenOp = 0;
+			int bestStart = Integer.MAX_VALUE;
 			for (Integer op : S) {
 				int j = getJob(op, machines);
 				int jt = getJobTask(op, machines);
 				int m = machine[j][jt];
-				if (m == M && Math.max(jobStart[j], machStart[m]) < finish) {
+				int start  = Math.max(jobStart[j], machStart[m]);
+				if (m == M && start < finish && start < bestStart) {
 					chosenOp = op;
 					int processtime = p.getJobs().get(j).getProcessTime(m);
 					jobStart[j] += processtime;
 					machStart[m] += processtime;
-					break;
 				}
 			}
 			P[t] = chosenOp;
