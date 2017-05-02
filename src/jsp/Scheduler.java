@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.jfree.ui.ApplicationFrame;
 import org.jfree.ui.RefineryUtilities;
 
@@ -111,38 +112,58 @@ public class Scheduler {
 			
 			int chosenOp = 0;
 			int bestStart = Integer.MAX_VALUE;
+			List<Integer> B = new ArrayList<Integer>();
 			for (Integer op : S) {
 				int j = getJob(op, machines);
 				int jt = getJobTask(op, machines);
 				int m = machine[j][jt];
 				int start  = Math.max(jobStart[j], machStart[m]);
-				if (m == M && start < b && start < bestStart) {
-					chosenOp = op;
-					bestStart = start;
-				} else if (m == M && start < b && start == bestStart) {
-					for (Integer chromOp : chromosome) {
-						if (chromOp == op) {
-							chosenOp = op;
-							bestStart = start;
-							break;
-						} else if (chromOp == operation){
-							break;
-						}
-					}
+				if(m==M && start < b){
+					B.add(op);
+				}
+//				if (m == M && start < b && start < bestStart) {
+//					chosenOp = op;
+//					bestStart = start;
+//				} else if (m == M && start < b && start == bestStart) {
+//					for (Integer chromOp : chromosome) {
+//						if (chromOp == op) {
+//							chosenOp = op;
+//							bestStart = start;
+//							break;
+//						} else if (chromOp == operation){
+//							break;
+//						}
+//					}
+//				}
+			}
+			int minIndex = Integer.MAX_VALUE;
+			for (Integer integer : B) {
+				int index = ArrayUtils.indexOf(chromosome, integer);
+				if(index<minIndex){
+					minIndex = index;
+					chosenOp = integer;
 				}
 			}
+//			chosenOp = chromosome[minIndex];
 			int j = getJob(chosenOp, machines);
 			int jt = getJobTask(chosenOp, machines);
 			int m = machine[j][jt];
 			int processtime = p.getJobs().get(j).getProcessTime(m);
-			jobStart[j] += processtime;
-			machStart[m] += processtime;
+			int start = Math.max(jobStart[j], machStart[m]);
+			jobStart[j] = start+processtime;
+			machStart[m] = start+processtime;
 			P[t] = chosenOp;
 			S.remove(S.indexOf(chosenOp));
 			if (getJobTask(chosenOp, machines) < machines-1)
 				S.add(chosenOp+1);
 			t ++;
 		}
+		int lastFin = Integer.MIN_VALUE;
+		for (int i = 0; i < jobStart.length; i++) {
+			if (jobStart[i] > lastFin)
+				lastFin = jobStart[i];
+		}
+		System.out.println("GT makeSpan: "+lastFin);
 		return P;
 	}
 	
