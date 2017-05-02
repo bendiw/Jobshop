@@ -56,10 +56,7 @@ public class PSO {
 //			System.out.println("position: "+Arrays.toString(swarm[0].getPosition()));
 			changed = false;
 			//calc fitness
-<<<<<<< HEAD
-			int bestSpan = Integer.MAX_VALUE;
-=======
->>>>>>> refs/remotes/origin/master
+
 			for (int j = 0; j < swarm.length; j++) {
 //				int fit = calcFitness(swarm[j].getPosition());
 				int[] oldChrom = Utils.getJobArray(swarm[j].getPosition(),p.getNumJobs(), false);
@@ -87,12 +84,7 @@ public class PSO {
 				if(fit<iterBest){
 					iterBest = fit;
 				}
-<<<<<<< HEAD
-				fit = calcFitness(swarm[j].getPosition());
-				if (fit < bestSpan)
-					bestSpan = fit;
-=======
->>>>>>> refs/remotes/origin/master
+
 				if(fit < globalBest){
 					changed = true;
 //					System.out.println("particle #"+j+" found new best sol");
@@ -108,8 +100,8 @@ public class PSO {
 			for (int j = 0; j < swarm.length; j++) {
 				swarm[j].move(bestPos, inertia);
 			}
-			if(changed || i % 10 == 0){
-				System.out.println("Iteration: "+i+"\tGlobal best: "+globalBest +"\tBest of iteration: "+bestSpan);
+			if(changed){
+				System.out.println("Iteration: "+i+"\tGlobal best: "+globalBest);
 			}
 			if (i % 10 == 0){
 				sumSpan = sumSpan/swarm.length;
@@ -119,10 +111,7 @@ public class PSO {
 		}
 //		int[] schedule = Scheduler.buildSchedule(bestChromo, p);
 		
-		int[] normChrom = Utils.normalizeArray(bestChromo, p.getNumMachines(), p.getNumJobs());
-		Scheduler.buildScheduleGantt(normChrom, p);
-		System.out.println("Best makespan: "+globalBest);
-		System.out.println(Arrays.toString(normChrom));
+
 	}
 	
 	public int calcFitness(double[] position) throws IOException{
@@ -262,14 +251,10 @@ public class PSO {
 	}
 	
 	public static void main(String[] args) throws IOException {
-		Problem p = ProblemCreator.create("6.txt");
+		Problem p = ProblemCreator.create("1.txt");
 		PSO pso = new PSO(p, 0.4,0.4,0.1);
 		for (int i = 0; i < 1; i++) {
-<<<<<<< HEAD
-			pso.run(10000, 100,1.4, 0.4, 0.00, 0.1, 0.97);
-=======
-			pso.run(1000, 70,1.4, 0.2, 0.01, 0.1, 0.97);
->>>>>>> refs/remotes/origin/master
+			pso.run(100, 70,1.4, 0.2, 0.01, 0.1, 0.97);
 		}
 	}
 	
