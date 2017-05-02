@@ -190,9 +190,11 @@ public class PSO {
 	}
 	
 	public static void main(String[] args) throws IOException {
-		Problem p = ProblemCreator.create("6.txt");
+		Problem p = ProblemCreator.create("2.txt");
 		PSO pso = new PSO(p, 0.4,0.4,0.1);
-		pso.run(4000, 400, 1.4, 0.4, 0.03, 0.1, 0.97);
+		for (int i = 0; i < 20; i++) {
+			pso.run(1000, 400,1.4, 0.4, 0.03, 0.1, 0.97); //startinertia was 1.4
+		}
 	}
 	
 	public static class Particle{

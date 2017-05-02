@@ -230,12 +230,48 @@ public class AntGraph {
 					}
 				}
 			}else{
-				EnumeratedIntegerDistribution distr = getDistr(ant);
-				decision = distr.sample();
+//				EnumeratedIntegerDistribution distr = getDistr(ant);
+//				decision = distr.sample();
+				decision = getMove(ant);
 			}
 //			updatePheromoneLocal(ant.current, decision); //comment out to only allow best ant to deposit
 			ant.move(decision);
 		}
+	}
+	
+	public int getMove(Ant ant){
+		int[] choices = (int[]) ArrayUtils.toPrimitive(ant.getOpen().toArray(new Integer[0]));
+		double[] probs = new double[choices.length];
+		double sum = 0;
+		for (int i = 0; i < choices.length; i++) {
+			int job = Math.floorDiv(choices[i],jobs);
+			int oper = choices[i]%machines;
+			double proc = p.getProcMatrix()[job][oper];
+			double phero = 0;
+			if(ant.current==-1){
+//				System.out.println("jobs: "+jobs);
+//				System.out.println("machines: "+machines);
+//				System.out.println(Math.floorDiv(choices[i],machines));
+				phero = firstPhero[Math.floorDiv(choices[i],machines)];
+			}else{
+				phero = pheromone[ant.current][choices[i]];
+			}
+			probs[i]= phero*Math.pow((1/proc), this.beta);
+			sum += probs[i];
+		}
+		for (int i = 0; i < probs.length; i++) {
+			probs[i] = probs[i]/sum;
+		}
+		double sumProb = probs[0];
+		double q = r.nextDouble();
+		for (int i = 0; i < choices.length; i++) {
+			if(q<sumProb){
+				return choices[i];
+			}else{
+				sumProb+=probs[i+1];
+			}
+		}
+		return -1;
 	}
 	
 	private void MIE(Ant ant, int fitness, double startTemp, double endTemp, double cooling){
@@ -366,9 +402,6 @@ public class AntGraph {
 			double proc = p.getProcMatrix()[job][oper];
 			double phero = 0;
 			if(ant.current==-1){
-//				System.out.println("jobs: "+jobs);
-//				System.out.println("machines: "+machines);
-//				System.out.println(Math.floorDiv(choices[i],machines));
 				phero = firstPhero[Math.floorDiv(choices[i],machines)];
 			}else{
 				phero = pheromone[ant.current][choices[i]];
@@ -379,21 +412,6 @@ public class AntGraph {
 		for (int i = 0; i < probs.length; i++) {
 			probs[i] = probs[i]/sum;
 		}
-//		for (int i = 0; i < choices.length; i++) {
-//			int job = Math.floorDiv(choices[i],jobs);
-//			int oper = choices[i]%machines;
-//			double proc = p.getProcMatrix()[job][oper];
-//			double phero = 0;
-//			if(ant.current==-1){
-//				phero = firstPhero[Math.floorDiv(choices[i],machines)];
-//			}else{
-//				phero = pheromone[ant.current][choices[i]];
-//			}
-//			probs[i]= (phero*Math.pow((1/proc), this.beta))/sum;		
-//		}
-//		System.out.println(Arrays.toString(choices));
-//		System.out.println(Arrays.toString(probs));
-//		System.out.println("choices: "+Arrays.toString(choices));
 		return new EnumeratedIntegerDistribution(choices, probs);
 	}
 	
@@ -404,9 +422,9 @@ public class AntGraph {
 	}
 	
 	public static void main(String[] args) throws IOException {
-		Problem p = ProblemCreator.create("6.txt");
+		Problem p = ProblemCreator.create("2.txt");
 		AntGraph a = new AntGraph(p, 2, 0.03, 0.1, 0, 1, 100, 0.001, 0.4, 0.4, 0.1); //decay was 0.01
-		a.run(2000, 40, 0.1, 0.1, 0.97);
+		a.run(4000, 300, 0, 0.1, 0.97);
 	}
 
 	
