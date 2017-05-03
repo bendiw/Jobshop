@@ -295,6 +295,10 @@ public class Scheduler {
 
 	}
 	
+	private static int getIndexOfOp(int[] chromosome, int operation){
+		return -1;
+	}
+	
 
 	public static List<int[]> buildScheduleBee(int[] chromosome, Problem p) {
 		int[][] process = p.getProcMatrix();
@@ -322,6 +326,13 @@ public class Scheduler {
 			sNext[j] ++;
 		}
 		List<List<Integer>> criticalPath = getCriticalPath(p, schedule, startTime, endTime);
+		for (List<Integer> list : criticalPath) {
+			System.out.println("--block--");
+			for (Integer integer : list) {
+				System.out.println(integer);
+			}
+			System.out.println("-----");
+		}
 		List<int[]> moves = new ArrayList<int[]>();
 		for (int i = 0; i < criticalPath.size(); i++) {
 			List<Integer> block = criticalPath.get(i);
@@ -333,17 +344,18 @@ public class Scheduler {
 			}
 			if (! (move[0]+move[1] > 0 && block.size() == 2)) {
 				if (i != criticalPath.size()-1 && block.size() > 1) {
+					int[] move2 = new int[2];
 					int size = block.size();
-					move[0] = block.get(size-2);
-					move[1] = block.get(size-1);
-					moves.add(0, move);
+					move2[0] = block.get(size-2);
+					move2[1] = block.get(size-1);
+					moves.add(0, move2);
 				}
 			}
 		}
 		return moves;
 	}
 	
-	private static List<List<Integer>> getCriticalPath(Problem p, int[][] schedule, int[][] startTime, int[][] endTime) {
+	public static List<List<Integer>> getCriticalPath(Problem p, int[][] schedule, int[][] startTime, int[][] endTime) {
 		int latest = 0;
 		int latestJob = 0;
 		int jobs = p.getNumJobs();

@@ -244,9 +244,7 @@ public class PSO {
 				insert = r.nextInt(tempList.size()+1);
 			}
 		}
-//		System.out.println(tempList.size());
-//		System.out.println(tempList2.size());
-//		System.out.println("r: "+insert);
+
 		tempList.addAll(insert, tempList2);
 		for (int i = 0; i < position.length; i++) {
 			position[i] = tempList.get(i);
