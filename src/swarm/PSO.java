@@ -266,7 +266,7 @@ public class PSO {
 	}
 	
 	public static void main(String[] args) throws IOException {
-		Problem p = ProblemCreator.create("5.txt");
+		Problem p = ProblemCreator.create("4.txt");
 		PSO pso = new PSO(p, 0.4,0.4,0.1);
 		for (int i = 0; i < 1; i++) {
 			pso.run(2000, 30, 1.4, 0.4, 0.04, 0.1, 0.97);
