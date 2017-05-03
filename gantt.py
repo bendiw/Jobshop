@@ -34,6 +34,7 @@ task_counter = [0]*len(schedule[0])
 label = []
 color = []
 machine = []
+taboo = []
 for job in range(len(schedule[0])):
     start[job] = []
     finish[job] = []
@@ -42,6 +43,25 @@ for job in range(len(schedule[0])):
     r = ra()
     b = ra()
     g = ra()
+    x = 0.25
+    g2g = True
+    if len(taboo) > 0:
+        for i in range(len(taboo)):
+            if abs(taboo[i][0]-r) < x:
+                if (abs(taboo[i][1]-g) < x):
+                    if (abs(taboo[i][2]-b) < x):
+                       g2g = False
+        while not g2g:
+            r = ra()
+            b = ra()
+            g = ra()
+            g2g = True
+            for i in range(len(taboo)):
+                if (abs(taboo[i][0]-r) < x):
+                    if (abs(taboo[i][1]-g) < x):
+                        if (abs(taboo[i][2]-b) < x):
+                            g2g = False
+    taboo.append([r,g,b])
     color.append((r,g,b))
 
     
