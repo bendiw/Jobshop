@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+
 import utils.Utils;
 
 import org.apache.commons.lang3.ArrayUtils;
@@ -59,6 +60,11 @@ public class PSO {
 			int iterBest = Integer.MAX_VALUE;
 			double sumSpan = 0;
 			changed = false;
+<<<<<<< HEAD
+=======
+			//calc fitness
+
+>>>>>>> refs/remotes/origin/master
 			for (int j = 0; j < swarm.length; j++) {
 				int[] oldChrom = Utils.getJobArray(swarm[j].getPosition(),p.getNumJobs(), false);
 				int[] giffChrom = Scheduler.giffThomp(oldChrom, p);
@@ -80,6 +86,7 @@ public class PSO {
 				if(fit<iterBest){
 					iterBest = fit;
 				}
+
 				if(fit < globalBest){
 					changed = true;
 					globalBest = fit;
