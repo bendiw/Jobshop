@@ -300,7 +300,7 @@ public class Scheduler {
 	}
 	
 
-	public static List<int[]> buildScheduleBee(int[] chromosome, Problem p) {
+	public static List<int[]> buildScheduleBee(int[] chromosome, Problem p, int[] taboo) {
 		int[][] process = p.getProcMatrix();
 		int[][] machine = p.getMachMatrix();
 		int jobs = p.getNumJobs();
@@ -326,33 +326,44 @@ public class Scheduler {
 			sNext[j] ++;
 		}
 		List<List<Integer>> criticalPath = getCriticalPath(p, schedule, startTime, endTime);
-		for (List<Integer> list : criticalPath) {
-			System.out.println("--block--");
-			for (Integer integer : list) {
-				System.out.println(integer);
-			}
-			System.out.println("-----");
-		}
+//		for (List<Integer> list : criticalPath) {
+////			System.out.println("--block--");
+//			for (Integer integer : list) {
+//				System.out.println(integer);
+//			}
+//			System.out.println("-----");
+//		}
 		List<int[]> moves = new ArrayList<int[]>();
 		for (int i = 0; i < criticalPath.size(); i++) {
 			List<Integer> block = criticalPath.get(i);
 			int[] move = new int[2];
 			if (i != 0 && block.size() > 1) {
-				move[0] = block.get(0);
-				move[1] = block.get(1);
-				moves.add(0, move);
+				if (! tabCheck(taboo, block.get(0), block.get(1))) {
+					move[0] = block.get(0);
+					move[1] = block.get(1);
+					moves.add(0, move);
+				}
 			}
 			if (! (move[0]+move[1] > 0 && block.size() == 2)) {
 				if (i != criticalPath.size()-1 && block.size() > 1) {
-					int[] move2 = new int[2];
 					int size = block.size();
-					move2[0] = block.get(size-2);
-					move2[1] = block.get(size-1);
-					moves.add(0, move2);
+					if (! tabCheck(taboo, block.get(size-2), block.get(size-1))) {
+						int[] move2 = new int[2];
+						move2[0] = block.get(size-2);
+						move2[1] = block.get(size-1);
+						moves.add(0, move2);
+					}
 				}
 			}
 		}
 		return moves;
+	}
+	
+	private static boolean tabCheck(int[] taboo, int first, int second) { //returns true if move is taboo
+		if (first == taboo[0] || first == taboo[1])
+			if (second == taboo[0] || second == taboo[1])
+				return true;
+		return false;
 	}
 	
 	public static List<List<Integer>> getCriticalPath(Problem p, int[][] schedule, int[][] startTime, int[][] endTime) {
@@ -377,7 +388,7 @@ public class Scheduler {
 		while (true) {
 			List<Integer> block = new ArrayList<Integer>();
 			while (true) {
-				for (int i = 0; i < machineSeq.length; i++) {
+				for (int i = 0; i < machineSeq[0].length; i++) {
 					if (machineSeq[latestJob][i] == machine)
 						task = i;
 				}
@@ -489,9 +500,9 @@ public class Scheduler {
 		return job*machines + task;
 	}
 	
-	public static List<int[]> getMoves(int[] operations, Problem p) {
+	public static List<int[]> getMoves(int[] operations, Problem p, int[] taboo) {
 		int[] chrom = makeChrom(operations, p);
-		return buildScheduleBee(chrom, p);
+		return buildScheduleBee(chrom, p, taboo);
 	}
 	
 
