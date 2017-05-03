@@ -111,9 +111,6 @@ public class PSO {
 		}
 //		int[] schedule = Scheduler.buildSchedule(bestChromo, p);
 		
-<<<<<<< HEAD
-
-=======
 		int[] normChrom = Utils.getJobArray(bestChromo, p.getNumJobs(), false);
 		System.out.println(Arrays.toString(normChrom));
 		int[] giffChrom = Scheduler.giffThomp(normChrom, p);
@@ -122,7 +119,6 @@ public class PSO {
 //		int[] giffSchedule = Scheduler.buildSchedule(giffChrom, p);
 		Scheduler.buildScheduleGantt(giffChrom, p);
 		System.out.println("Best makespan: "+globalBest);
->>>>>>> refs/remotes/origin/master
 	}
 	
 	public int calcFitness(double[] position) throws IOException{
@@ -262,17 +258,10 @@ public class PSO {
 	}
 	
 	public static void main(String[] args) throws IOException {
-<<<<<<< HEAD
-		Problem p = ProblemCreator.create("1.txt");
-		PSO pso = new PSO(p, 0.4,0.4,0.1);
-		for (int i = 0; i < 1; i++) {
-			pso.run(100, 70,1.4, 0.2, 0.01, 0.1, 0.97);
-=======
 		Problem p = ProblemCreator.create("6.txt");
 		PSO pso = new PSO(p, 0.4,0.4,0.1);
 		for (int i = 0; i < 1; i++) {
 			pso.run(2000, 70,1.4, 0.2, 0.01, 0.1, 0.97);
->>>>>>> refs/remotes/origin/master
 		}
 	}
 	
