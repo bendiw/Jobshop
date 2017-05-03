@@ -8,16 +8,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import utils.Utils;
 
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.math3.distribution.EnumeratedIntegerDistribution;
-import org.apache.commons.math3.stat.descriptive.summary.Sum;
 
-import ants.AntGraph.Ant;
 
 public class BeeColony {
 	private Problem p;
@@ -47,9 +43,7 @@ public class BeeColony {
 		this.alpha = alpha;
 		this.beta = beta;
 		this.rating = rating;
-		this.waggleFactor = waggleFactor;
 		this.waggleProb = waggleProb;
-		this.eliteMax = eliteMax;
 		this.iter = iter;
 		this.pSwap = pSwap;
 		this.pInsert = pInsert;
@@ -72,6 +66,7 @@ public class BeeColony {
 		for (int i = 0; i < bees; i++) {
 			int[] chromo = initChromo.clone();
 			Utils.shuffleArray(chromo);
+			chromo = Scheduler.giffThomp(chromo, p);
 			chromos.add(chromo);
 		}
 		return chromos;
@@ -108,44 +103,6 @@ public class BeeColony {
 		return -1;
 	}
 	
-	private EnumeratedIntegerDistribution getDistr(Bee bee){
-		int[] choices = new int[bee.getMoves().size()];
-		for (int i = 0; i < choices.length; i++) {
-			choices[i]=i;
-		}
-		double[] ratings = bee.getRatings();
-		double[] attr = bee.getAttractiveness();
-		double[] probs = new double[choices.length];
-		double sum = 0;
-		for (int i = 0; i < choices.length; i++) {
-			probs[i] = Math.pow(ratings[i],alpha)*Math.pow(attr[i], beta);
-			sum += probs[i];
-		}
-		if(sum!=0){
-			for (int i = 0; i < probs.length; i++) {
-				probs[i] = probs[i]/sum;
-			}
-		}else{
-			probs[0] = 1;
-		}
-//		System.out.println("rat: "+ratings[0]);
-//		System.out.println("probs: "+Arrays.toString(probs));
-		return new EnumeratedIntegerDistribution(choices, probs);
-	}
-	
-	private EnumeratedIntegerDistribution getDistr(ArrayList<Double> prof, double avgProf){
-		int[] indexes = new int[prof.size()];
-//		System.out.println(avgProf);
-		for (int i = 0; i < indexes.length; i++) {
-			indexes[i] = i;
-		}
-		double[] probs = new double[prof.size()];
-		for (int i = 0; i < probs.length; i++) {
-			probs[i] = prof.get(i)/avgProf;
-		}
-//		System.out.println(Arrays.toString(probs));
-		return new EnumeratedIntegerDistribution(indexes, probs);
-	}
 
 	
 	private void run(int iterations, int bees, double probDance, double endTemp, double cooling, double MIEprob) throws IOException {
@@ -178,12 +135,8 @@ public class BeeColony {
 				double mie = r.nextDouble();
 				if(mie <= MIEprob){
 					double initTemp = makeSpan-globBest+10;
-					MIE(bee, makeSpan, initTemp, endTemp, cooling);
+					makeSpan = MIE(bee, makeSpan, initTemp, endTemp, cooling);
 				}
-				giffChrom = Scheduler.giffThomp(bee.getChromo(), p);
-				giffChrom = Utils.normalizeArray(giffChrom, p.getNumMachines(), p.getNumJobs());
-				schedule = Scheduler.buildSchedule(giffChrom,p);
-				makeSpan = Scheduler.makespanFitness(schedule);
 				if(makeSpan < globBest){
 					globBest = makeSpan;
 					bestChromo = bee.getChromo();
@@ -206,22 +159,14 @@ public class BeeColony {
 					avgSpan += (double) makeSpan;
 				}
 			}
-//			dancers.add(globBee);
-//			danceProf.add(beeProf);
-//			avgProf+= beeProf;
-//			avgSpan += (double) makeSpan;
 			int recruited = 0;
 			if(dancers.size()>0){
 				double avgProf2 = avgProf/(double)dancers.size();
-//				EnumeratedIntegerDistribution danceDistr = getDistr(danceProf, avgProf);
-//				double[] dancerProbs = getProbs(danceProf, avgProf2);
 				for (int j = 0; j < colony.size(); j++) {
 					double q = r.nextDouble();
 					double rProb = getProb(prof[j], avgProf2);
-//					System.out.println("r: "+rProb);
 					if(q < rProb){
 						recruited+=1;
-//						Bee dancer = dancers.get(danceDistr.sample());
 						Bee dancer = dancers.get(getChoice(danceProf, avgProf2));
 						colony.get(j).adoptPreferred(dancer.getPreferred(), dancer.getNumPreferred());
 					}
@@ -236,6 +181,12 @@ public class BeeColony {
 //			System.out.println("iteration best: "+iterBest);
 		}
 		System.out.println("Best: "+globBest);
+		int[] giffChrom = Scheduler.giffThomp(bestChromo, p);
+		int[] giffChrom2 = Utils.normalizeArray(giffChrom, p.getNumMachines(), p.getNumJobs());
+		Scheduler.buildScheduleGantt(giffChrom2, p);
+		System.out.println("Critical path");
+		System.out.println(Arrays.toString(giffChrom));
+		Scheduler.getMoves(giffChrom, p);
 	}
 	
 	public int getChoice(ArrayList<Double> prof, double avgProf){
@@ -260,14 +211,22 @@ public class BeeColony {
 	}
 	
 	public void forage(List<Bee> bees) throws IOException{
-		int noMoves = 0;
 		Bee drawBee = null;
 		for (Bee bee : bees) {
 			if(bee.getMoves().size()>0){
 //				EnumeratedIntegerDistribution distr = getDistr(bee);
 //				int choice = distr.sample();
 				int choice = getChoice(bee);
-				int[] move = bee.getMoves().get(choice);
+				ArrayList<int[]> moves = bee.getMoves();
+				int[] move = moves.get(choice);
+				if(bees.indexOf(bee)==0){
+					System.out.println("move: "+Arrays.toString(move));
+					for (int[] muve : moves) {
+						System.out.print(Arrays.toString(muve)+"\t");
+					}
+					System.out.println();
+					System.out.println("chromo before move: "+Arrays.toString(bee.getChromo()));
+				}
 //				int[] schedule = Scheduler.buildSchedule(normalizeArray(bee.getChromo()),p);
 //				int makeSpan = Scheduler.makespanFitness(schedule);
 //				System.out.println("before:"+makeSpan);
@@ -277,13 +236,8 @@ public class BeeColony {
 //				System.out.println(Arrays.toString(bee.getChromo()));
 //				System.out.println("after:"+makeSpan);
 				bee.updateMoves(p);
-				if(bees.indexOf(bee)==0){
-//					System.out.println("move: "+Arrays.toString(move));
-//					System.out.println("new chromo: "+Arrays.toString(bee.getChromo()));
-				}
 			}else{
 				Scheduler.buildScheduleGantt(normalizeArray(drawBee.getChromo()), p);
-				noMoves +=1;
 				Scheduler.getMoves(bee.getChromo(),p);
 			}
 		}
@@ -303,11 +257,12 @@ public class BeeColony {
 			return 0;
 		}
 	
-	private void MIE(Bee bee, int fitness, double startTemp, double endTemp, double cooling){
+	private int MIE(Bee bee, int fitness, double startTemp, double endTemp, double cooling){
 //		double[] position = prt.getPosition().clone();
 		int[] position = Arrays.copyOf(bee.getChromo(), bee.getChromo().length);
 //		int[] jobArray = Utils.getJobArray(position, p.getNumJobs());
 		double temperature = startTemp;
+		int bestFitness = fitness;
 		while(temperature > endTemp){
 			Collections.shuffle(indexes);
 			double q = r.nextDouble();
@@ -331,6 +286,7 @@ public class BeeColony {
 //			System.out.println(Arrays.toString(chromo));
 			if(newFitness <= fitness){
 				bee.setChromo(position, p);
+				bestFitness = newFitness;
 //				prt.setPosition(position);
 //				prt.updateFitness(newFitness);
 			}else{
@@ -341,11 +297,13 @@ public class BeeColony {
 //					prt.setPosition(position);
 //					prt.updateFitness(newFitness);
 					bee.setChromo(position, p);
+					bestFitness = newFitness;
 				}
 			}
 			temperature = temperature*cooling;
 			bee.updateIndexes();
 		}
+		return bestFitness;
 	}
 	
 	private int[] swap(int[] position){
@@ -418,13 +376,13 @@ public class BeeColony {
 	
 	public static void main(String[] args) throws IOException {
 
-		Problem p = ProblemCreator.create("2.txt");
-		BeeColony bc = new BeeColony(p, 1, 1, 0.99, 0.03, 0.4, 0.4, 0.1); //waggle was 0.01 w/o ratio multiplic
+		Problem p = ProblemCreator.create("1.txt");
+		BeeColony bc = new BeeColony(p, 1, 1, 0.99,0.03, 0.4, 0.4, 0.1); //waggle was 0.01 w/o ratio multiplic
 		ArrayList<int[]> c = bc.generateInitSol(30);
 		System.out.println(Arrays.toString(c.get(0)));
 		System.out.println(Arrays.toString(c.get(1)));
 		for (int i = 0; i < 1; i++) {
-			bc.run(1000, 20, 0.01, 0.1, 0.97, 0.0);
+			bc.run(1, 30, 0.01, 0.1, 0.97, 0.0);
 		}
 	}
 	
