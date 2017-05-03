@@ -360,10 +360,7 @@ public class Scheduler {
 		int latestJob = 0;
 		int jobs = p.getNumJobs();
 		int machines = p.getNumMachines();
-		int[] task = new int[jobs];
-		for (int i = 0; i < task.length; i++) {
-			task[i] = machines-1;
-		}
+		int task = 0;
 		
 		for (int i = 0; i < machines; i++) {
 			if (latest < endTime[i][jobs-1]) {
@@ -373,20 +370,23 @@ public class Scheduler {
 		}
 		
 		int[][] machineSeq = p.getMachMatrix();
-		int machine = machineSeq[latestJob][task[latestJob]];
+		int machine = machineSeq[latestJob][machines-1];
 		List<List<Integer>> criticalPath = new ArrayList<List<Integer>>();
 		int scheduleTask = jobs - 1;
 		
 		while (true) {
 			List<Integer> block = new ArrayList<Integer>();
 			while (true) {
-				block.add(0, getOpNr(latestJob, machines, task[latestJob]));
-				task[latestJob] --;
+				for (int i = 0; i < machineSeq.length; i++) {
+					if (machineSeq[latestJob][i] == machine)
+						task = i;
+				}
+				
+				block.add(0, getOpNr(latestJob, machines, task));
 				if(scheduleTask == 0){
 					criticalPath.add(0, block);
 					break;
 				}
-//				System.out.println(scheduleTask);
 				if (endTime[machine][scheduleTask-1]  != startTime[machine][scheduleTask]) {
 					criticalPath.add(0, block);
 					break;
@@ -395,9 +395,7 @@ public class Scheduler {
 					scheduleTask --;
 				}
 			}
-//			if(scheduleTask == 0){
-//				break;
-//			}
+
 			boolean foundNew = false;
 			for (int i = 0; i < endTime.length; i++) {
 				if (i != machine) {
