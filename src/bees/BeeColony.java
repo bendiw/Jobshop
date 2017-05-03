@@ -35,16 +35,18 @@ public class BeeColony {
 	private double pSwap;
 	private double pInsert;
 	private double pInvert;
+	private int tabooSize;
 	
 	
 	
-	public BeeColony(Problem p, double alpha, double beta, double rating, double waggleProb, double pSwap, double pInsert, double pInvert) {
+	public BeeColony(Problem p, double alpha, double beta, double rating, double waggleProb, double pSwap, double pInsert, double pInvert, int tabooSize) {
 		this.p = p;
 		this.alpha = alpha;
 		this.beta = beta;
 		this.rating = rating;
 		this.waggleProb = waggleProb;
 		this.iter = iter;
+		this.tabooSize = tabooSize;
 		this.pSwap = pSwap;
 		this.pInsert = pInsert;
 		this.pInvert = pInvert;
@@ -237,7 +239,7 @@ public class BeeColony {
 //				int makeSpan = Scheduler.makespanFitness(schedule);
 //				System.out.println("before:"+makeSpan);
 //				System.out.println(Arrays.toString(bee.getChromo()));
-				bee.move(move);
+				bee.move(move, tabooSize);
 //				Arrays.sort(sorted);
 //				System.out.println(Arrays.toString(bee.getChromo()));
 //				System.out.println("after:"+makeSpan);
@@ -246,6 +248,7 @@ public class BeeColony {
 				ArrayList<int[]> newChromo = generateInitSol(1);
 				int index = bees.indexOf(bee);
 				bees.remove(bee);
+				System.out.println("BEE REMOVED HEHEHEH");
 				bees.add(index, new Bee(p, newChromo.get(0), rating));
 			}
 		}
@@ -385,11 +388,12 @@ public class BeeColony {
 	public static void main(String[] args) throws IOException {
 
 		Problem p = ProblemCreator.create("6.txt");
-		BeeColony bc = new BeeColony(p, 1, 1, 0.99,0.03, 0.4, 0.4, 0.1); //waggle was 0.01 w/o ratio multiplic
+		int tabSize = 5;
+		BeeColony bc = new BeeColony(p, 1, 1, 0.99,0.03, 0.4, 0.4, 0.1, tabSize); //waggle was 0.01 w/o ratio multiplic
 		ArrayList<int[]> c = bc.generateInitSol(30);
 		System.out.println(Arrays.toString(c.get(0)));
 		System.out.println(Arrays.toString(c.get(1)));
-		int runs = 50;
+		int runs = 10;
 		int[] bestChromo = null;
 		int bestSpan = Integer.MAX_VALUE;
 		for (int j = 0; j < runs ; j++) {
@@ -415,14 +419,14 @@ public class BeeColony {
 		private int numPref;
 		private double gamma;
 		private int movesMade;
-		private int[] taboo;
+		private List<int[]> taboo;
 
 		
 		public Bee(Problem p, int[] chromo, double gamma){
 			chromosome = chromo;
 			this.movesMade = 0;
 			this.gamma = gamma;
-			this.taboo = new int[2];
+			this.taboo = new ArrayList<int[]>();
 			moves = (ArrayList<int[]>)Scheduler.getMoves(chromo, p, this.getTaboo());
 			attractiveness = Scheduler.getAttract(moves, p, chromo);
 			indexes = new int[chromo.length];
@@ -432,11 +436,22 @@ public class BeeColony {
 			preferred = new boolean[p.getNumJobs()*p.getNumMachines()][p.getNumJobs()*p.getNumMachines()];
 		}
 		
-		private void setTaboo(int[] move) {
-			taboo = move.clone();
+		private void setTaboo(int[] move, int tabooSize) {
+			for (int i = tabooSize-1; i > 0; i--) {
+				if (i <= taboo.size()) {
+					if (i == taboo.size())
+						taboo.add(taboo.get(i-1));
+					else
+						taboo.set(i, taboo.get(i-1));
+				}
+			}
+			if (taboo.size() < 1)
+				taboo.add(move.clone());
+			else
+				taboo.set(0, move.clone());
 		}
 		
-		public int[] getTaboo() {
+		public List<int[]> getTaboo() {
 			return taboo;
 		}
 		
@@ -517,7 +532,7 @@ public class BeeColony {
 			updateMoves(p);
 		}
 		
-		public void move(int[] move){
+		public void move(int[] move, int tabSize){
 			this.movesMade+=1;
 			int first = move[0];
 			int second = move[1];
@@ -531,7 +546,7 @@ public class BeeColony {
 			int tempIndex = new Integer(indexes[first]);
 			indexes[first] = new Integer(indexes[second]);
 			indexes[second] = tempIndex;
-			this.setTaboo(move);
+			this.setTaboo(move, tabSize);
 //			System.out.println("index: "+Arrays.toString(indexes));
 //			System.out.println("fIndex:"+indexes[first]+", sIndex: "+indexes[second]);
 		}
