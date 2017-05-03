@@ -268,10 +268,10 @@ public class Scheduler {
 //				processString += process[i][j] + ",";
 //			}
 //		}
-		System.out.println(numJobs);
-		System.out.println(numMachs);
-		System.out.println(scheduleString);
-		System.out.println(startTimeString);
+//		System.out.println(numJobs);
+//		System.out.println(numMachs);
+//		System.out.println(scheduleString);
+//		System.out.println(startTimeString);
 //		System.out.println(processString);
 		
 		
@@ -300,7 +300,7 @@ public class Scheduler {
 	}
 	
 
-	public static List<int[]> buildScheduleBee(int[] chromosome, Problem p, int[] taboo) {
+	public static List<int[]> buildScheduleBee(int[] chromosome, Problem p, List<int[]> taboo) {
 		int[][] process = p.getProcMatrix();
 		int[][] machine = p.getMachMatrix();
 		int jobs = p.getNumJobs();
@@ -359,10 +359,13 @@ public class Scheduler {
 		return moves;
 	}
 	
-	private static boolean tabCheck(int[] taboo, int first, int second) { //returns true if move is taboo
-		if (first == taboo[0] || first == taboo[1])
-			if (second == taboo[0] || second == taboo[1])
-				return true;
+	private static boolean tabCheck(List<int[]> taboo, int first, int second) { //returns true if move is taboo
+		for (int i = 0; i < taboo.size(); i++) {
+			int[] tab = taboo.get(i);
+			if (first == tab[0] || first == tab[1])
+				if (second == tab[0] || second == tab[1])
+					return true;
+		}
 		return false;
 	}
 	
@@ -500,7 +503,7 @@ public class Scheduler {
 		return job*machines + task;
 	}
 	
-	public static List<int[]> getMoves(int[] operations, Problem p, int[] taboo) {
+	public static List<int[]> getMoves(int[] operations, Problem p, List<int[]> taboo) {
 		int[] chrom = makeChrom(operations, p);
 		return buildScheduleBee(chrom, p, taboo);
 	}
