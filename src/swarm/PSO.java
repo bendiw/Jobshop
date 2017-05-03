@@ -60,11 +60,6 @@ public class PSO {
 			int iterBest = Integer.MAX_VALUE;
 			double sumSpan = 0;
 			changed = false;
-<<<<<<< HEAD
-=======
-			//calc fitness
-
->>>>>>> refs/remotes/origin/master
 			for (int j = 0; j < swarm.length; j++) {
 				int[] oldChrom = Utils.getJobArray(swarm[j].getPosition(),p.getNumJobs(), false);
 				int[] giffChrom = Scheduler.giffThomp(oldChrom, p);
