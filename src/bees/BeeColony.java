@@ -250,10 +250,6 @@ public class BeeColony {
 				ArrayList<int[]> newChromo = generateInitSol(1);
 				int index = bees.indexOf(bee);
 				bees.remove(bee);
-<<<<<<< HEAD
-=======
-//				System.out.println("BEE REMOVED");
->>>>>>> refs/remotes/origin/master
 				bees.add(index, new Bee(p, newChromo.get(0), rating));
 			}
 		}
@@ -392,22 +388,14 @@ public class BeeColony {
 	
 	public static void main(String[] args) throws IOException {
 
-<<<<<<< HEAD
-		Problem p = ProblemCreator.create("6.txt");
-		int tabSize = 7;
-=======
+
 		Problem p = ProblemCreator.create("3.txt");
 		int tabSize = 5;
->>>>>>> refs/remotes/origin/master
 		BeeColony bc = new BeeColony(p, 1, 1, 0.99,0.03, 0.4, 0.4, 0.1, tabSize); //waggle was 0.01 w/o ratio multiplic
 		ArrayList<int[]> c = bc.generateInitSol(30);
 		System.out.println(Arrays.toString(c.get(0)));
 		System.out.println(Arrays.toString(c.get(1)));
-<<<<<<< HEAD
-		int runs = 15;
-=======
 		int runs = 5;
->>>>>>> refs/remotes/origin/master
 		int[] bestChromo = null;
 		int bestSpan = Integer.MAX_VALUE;
 		for (int j = 0; j < runs ; j++) {
