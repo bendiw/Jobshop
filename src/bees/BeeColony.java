@@ -105,7 +105,7 @@ public class BeeColony {
 	
 
 	
-	private void run(int iterations, int bees, double probDance, double endTemp, double cooling, double MIEprob) throws IOException {
+	private int[] run(int iterations, int bees, double probDance, double endTemp, double cooling, double MIEprob) throws IOException {
 		ArrayList<int[]> initChromos = generateInitSol(bees);
 		ArrayList<Bee> colony = new ArrayList<Bee>();
 		for (int i = 0; i < bees; i++) {
@@ -114,6 +114,7 @@ public class BeeColony {
 		int globBest = Integer.MAX_VALUE;
 		int[] bestChromo = null;
 		int[] bestSchedule = null;
+		Bee bestBee = null;
 		forage(colony);
 		for (int i = 0; i < iterations; i++) {
 			int iterBest = Integer.MAX_VALUE;
@@ -138,8 +139,9 @@ public class BeeColony {
 					makeSpan = MIE(bee, makeSpan, initTemp, endTemp, cooling);
 				}
 				if(makeSpan < globBest){
+					bestBee = bee;
 					globBest = makeSpan;
-					bestChromo = bee.getChromo();
+					bestChromo = Scheduler.giffThomp(bee.getChromo(), p);
 					bestSchedule = schedule;
 					changed = true;
 					glob = true;
@@ -173,20 +175,21 @@ public class BeeColony {
 				}
 			}
 			forage(colony);
-			if(changed){
-				System.out.println("Iteration: "+i+"\t Best: "+globBest);
-				System.out.println("bees recruited by dancing: "+recruited);
-				System.out.println("Dancers: "+dancers.size()+", avg. dancer makespan: "+avgSpan/dancers.size()+"\n");
-			}
+//			if(changed){
+//				System.out.println("Iteration: "+i+"\t Best: "+globBest);
+//				System.out.println("bees recruited by dancing: "+recruited);
+//				System.out.println("Dancers: "+dancers.size()+", avg. dancer makespan: "+avgSpan/dancers.size()+"\n");
+//			}
 //			System.out.println("iteration best: "+iterBest);
 		}
 		System.out.println("Best: "+globBest);
-		int[] giffChrom = Scheduler.giffThomp(bestChromo, p);
-		int[] giffChrom2 = Utils.normalizeArray(giffChrom, p.getNumMachines(), p.getNumJobs());
-		Scheduler.buildScheduleGantt(giffChrom2, p);
-		System.out.println("Critical path");
-		System.out.println(Arrays.toString(giffChrom));
-		Scheduler.getMoves(giffChrom, p);
+		int[] giffChrom = Utils.normalizeArray(bestChromo, p.getNumMachines(), p.getNumJobs());
+		return giffChrom;
+		
+//		int[] giffChrom = Scheduler.giffThomp(bee.getChromo(), p);
+//		giffChrom = Utils.normalizeArray(giffChrom, p.getNumMachines(), p.getNumJobs());
+//		int[] schedule = Scheduler.buildSchedule(giffChrom,p);
+//		int makeSpan = Scheduler.makespanFitness(schedule);
 	}
 	
 	public int getChoice(ArrayList<Double> prof, double avgProf){
@@ -212,21 +215,24 @@ public class BeeColony {
 	
 	public void forage(List<Bee> bees) throws IOException{
 		Bee drawBee = null;
-		for (Bee bee : bees) {
+		for (int i = 0; i < bees.size(); i++) {
+			Bee bee = bees.get(i);
 			if(bee.getMoves().size()>0){
 //				EnumeratedIntegerDistribution distr = getDistr(bee);
 //				int choice = distr.sample();
 				int choice = getChoice(bee);
 				ArrayList<int[]> moves = bee.getMoves();
 				int[] move = moves.get(choice);
-				if(bees.indexOf(bee)==0){
-					System.out.println("move: "+Arrays.toString(move));
-					for (int[] muve : moves) {
-						System.out.print(Arrays.toString(muve)+"\t");
-					}
-					System.out.println();
-					System.out.println("chromo before move: "+Arrays.toString(bee.getChromo()));
-				}
+//				if(bees.indexOf(bee)==0){
+//					System.out.println("taboo: "+Arrays.toString(bee.getTaboo()));
+//					System.out.println("move: "+Arrays.toString(move));
+//					for (int[] muve : moves) {
+//						System.out.print(Arrays.toString(muve)+"\t");
+//					}
+//					System.out.println();
+//					System.out.println("chromo before move: "+Arrays.toString(bee.getChromo()));
+//					System.out.println();
+//				}
 //				int[] schedule = Scheduler.buildSchedule(normalizeArray(bee.getChromo()),p);
 //				int makeSpan = Scheduler.makespanFitness(schedule);
 //				System.out.println("before:"+makeSpan);
@@ -237,8 +243,10 @@ public class BeeColony {
 //				System.out.println("after:"+makeSpan);
 				bee.updateMoves(p);
 			}else{
-				Scheduler.buildScheduleGantt(normalizeArray(drawBee.getChromo()), p);
-				Scheduler.getMoves(bee.getChromo(),p);
+				ArrayList<int[]> newChromo = generateInitSol(1);
+				int index = bees.indexOf(bee);
+				bees.remove(bee);
+				bees.add(index, new Bee(p, newChromo.get(0), rating));
 			}
 		}
 //		if(drawBee!=null)
@@ -376,14 +384,26 @@ public class BeeColony {
 	
 	public static void main(String[] args) throws IOException {
 
-		Problem p = ProblemCreator.create("1.txt");
+		Problem p = ProblemCreator.create("6.txt");
 		BeeColony bc = new BeeColony(p, 1, 1, 0.99,0.03, 0.4, 0.4, 0.1); //waggle was 0.01 w/o ratio multiplic
 		ArrayList<int[]> c = bc.generateInitSol(30);
 		System.out.println(Arrays.toString(c.get(0)));
 		System.out.println(Arrays.toString(c.get(1)));
-		for (int i = 0; i < 1; i++) {
-			bc.run(1, 30, 0.01, 0.1, 0.97, 0.0);
+		int runs = 50;
+		int[] bestChromo = null;
+		int bestSpan = Integer.MAX_VALUE;
+		for (int j = 0; j < runs ; j++) {
+			for (int i = 0; i < 1; i++) {
+				int[] newChromo = bc.run(100, 100, 0.01, 0.1, 0.97, 0.0);
+				int newSpan = Scheduler.makespanFitness(Scheduler.buildSchedule(newChromo, p));
+				if (newSpan < bestSpan) {
+					bestSpan = newSpan;
+					bestChromo = newChromo.clone();
+				}
+			}
 		}
+		System.out.println("Global Best: "+bestSpan);
+		Scheduler.buildScheduleGantt(bestChromo, p);
 	}
 	
 	public static class Bee{
@@ -395,19 +415,29 @@ public class BeeColony {
 		private int numPref;
 		private double gamma;
 		private int movesMade;
+		private int[] taboo;
 
 		
 		public Bee(Problem p, int[] chromo, double gamma){
 			chromosome = chromo;
 			this.movesMade = 0;
 			this.gamma = gamma;
-			moves = (ArrayList<int[]>)Scheduler.getMoves(chromo, p);
+			this.taboo = new int[2];
+			moves = (ArrayList<int[]>)Scheduler.getMoves(chromo, p, this.getTaboo());
 			attractiveness = Scheduler.getAttract(moves, p, chromo);
 			indexes = new int[chromo.length];
 			for (int i = 0; i < chromo.length; i++) {
 				indexes[chromosome[i]] = i;
 			}
 			preferred = new boolean[p.getNumJobs()*p.getNumMachines()][p.getNumJobs()*p.getNumMachines()];
+		}
+		
+		private void setTaboo(int[] move) {
+			taboo = move.clone();
+		}
+		
+		public int[] getTaboo() {
+			return taboo;
 		}
 		
 		public void updateIndexes(){
@@ -427,7 +457,7 @@ public class BeeColony {
 		}
 		
 		public void updateMoves(Problem p){
-			this.moves = (ArrayList<int[]>)Scheduler.getMoves(chromosome, p);
+			this.moves = (ArrayList<int[]>)Scheduler.getMoves(chromosome, p, this.getTaboo());
 			attractiveness = Scheduler.getAttract(moves, p, chromosome);
 		}
 		
@@ -501,6 +531,7 @@ public class BeeColony {
 			int tempIndex = new Integer(indexes[first]);
 			indexes[first] = new Integer(indexes[second]);
 			indexes[second] = tempIndex;
+			this.setTaboo(move);
 //			System.out.println("index: "+Arrays.toString(indexes));
 //			System.out.println("fIndex:"+indexes[first]+", sIndex: "+indexes[second]);
 		}
