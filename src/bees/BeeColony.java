@@ -136,9 +136,11 @@ public class BeeColony {
 				int[] schedule = Scheduler.buildSchedule(giffChrom,p);
 				int makeSpan = Scheduler.makespanFitness(schedule);
 				double mie = r.nextDouble();
-				if(mie <= MIEprob){
-					double initTemp = makeSpan-globBest+10;
-					makeSpan = MIE(bee, makeSpan, initTemp, endTemp, cooling);
+				if(MIEprob >0){
+					if(mie <= MIEprob || makeSpan <= globBest){
+						double initTemp = makeSpan-globBest+10;
+						makeSpan = MIE(bee, makeSpan, initTemp, endTemp, cooling);
+					}
 				}
 				if(makeSpan < globBest){
 					bestBee = bee;
@@ -248,7 +250,6 @@ public class BeeColony {
 				ArrayList<int[]> newChromo = generateInitSol(1);
 				int index = bees.indexOf(bee);
 				bees.remove(bee);
-//				System.out.println("BEE REMOVED");
 				bees.add(index, new Bee(p, newChromo.get(0), rating));
 			}
 		}
@@ -270,11 +271,11 @@ public class BeeColony {
 	
 	private int MIE(Bee bee, int fitness, double startTemp, double endTemp, double cooling){
 //		double[] position = prt.getPosition().clone();
-		int[] position = Arrays.copyOf(bee.getChromo(), bee.getChromo().length);
 //		int[] jobArray = Utils.getJobArray(position, p.getNumJobs());
 		double temperature = startTemp;
 		int bestFitness = fitness;
 		while(temperature > endTemp){
+			int[] position = Arrays.copyOf(bee.getChromo(), bee.getChromo().length);
 			Collections.shuffle(indexes);
 			double q = r.nextDouble();
 			if(q<=pSwap){
@@ -296,7 +297,7 @@ public class BeeColony {
 //			System.out.println(Arrays.toString(position));
 //			System.out.println(Arrays.toString(chromo));
 			if(newFitness <= fitness){
-				bee.setChromo(position, p);
+				bee.setChromo(Arrays.copyOf(position, position.length), p);
 				bestFitness = newFitness;
 //				prt.setPosition(position);
 //				prt.updateFitness(newFitness);
@@ -307,7 +308,7 @@ public class BeeColony {
 				if(rand < Math.min(1, accept)){
 //					prt.setPosition(position);
 //					prt.updateFitness(newFitness);
-					bee.setChromo(position, p);
+					bee.setChromo(Arrays.copyOf(position, position.length), p);
 					bestFitness = newFitness;
 				}
 			}
@@ -387,6 +388,7 @@ public class BeeColony {
 	
 	public static void main(String[] args) throws IOException {
 
+
 		Problem p = ProblemCreator.create("3.txt");
 		int tabSize = 5;
 		BeeColony bc = new BeeColony(p, 1, 1, 0.99,0.03, 0.4, 0.4, 0.1, tabSize); //waggle was 0.01 w/o ratio multiplic
@@ -398,7 +400,7 @@ public class BeeColony {
 		int bestSpan = Integer.MAX_VALUE;
 		for (int j = 0; j < runs ; j++) {
 			for (int i = 0; i < 1; i++) {
-				int[] newChromo = bc.run(100, 100, 0.01, 0.1, 0.97, 0.0);
+				int[] newChromo = bc.run(200, 1000, 0.01, 0.1, 0.97, 0.0);
 				int newSpan = Scheduler.makespanFitness(Scheduler.buildSchedule(newChromo, p));
 				if (newSpan < bestSpan) {
 					bestSpan = newSpan;
@@ -465,6 +467,7 @@ public class BeeColony {
 		public void adoptPreferred(boolean[][] pref, int numPref){
 			this.preferred = pref;
 			this.numPref = numPref;
+//			this.taboo.clear();
 		}
 		
 		public int[] getChromo(){
