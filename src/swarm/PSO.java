@@ -68,13 +68,15 @@ public class PSO {
 				int fit = Scheduler.makespanFitness(giffSchedule);
 				
 				double mie = r.nextDouble();
-				if(mie <= MIEprob|| fit <= globalBest){
+				if(MIEprob > 0 ){
+					if(mie <= MIEprob|| fit <= globalBest){
 //					System.out.println("fit before MIE: "+fit);
-					double initTemp = (fit-globalBest)+10;
-					fit = MIE(swarm[j], fit, initTemp, endTemp, cooling);
+						double initTemp = (fit-globalBest)+10;
+						fit = MIE(swarm[j], fit, initTemp, endTemp, cooling);
 //					System.out.println("fit after MIE: "+fit);
-					oldChrom = Utils.getJobArray(swarm[j].getPosition(),p.getNumJobs(), false);
-					giffChrom = Scheduler.giffThomp(oldChrom, p);
+						oldChrom = Utils.getJobArray(swarm[j].getPosition(),p.getNumJobs(), false);
+						giffChrom = Scheduler.giffThomp(oldChrom, p);
+					}
 				}
 				swarm[j].updateFitness(fit);
 				sumSpan+= fit;
@@ -266,10 +268,10 @@ public class PSO {
 	}
 	
 	public static void main(String[] args) throws IOException {
-		Problem p = ProblemCreator.create("4.txt");
+		Problem p = ProblemCreator.create("3.txt");
 		PSO pso = new PSO(p, 0.4,0.4,0.1);
 		for (int i = 0; i < 1; i++) {
-			pso.run(2000, 30, 1.4, 0.4, 0.04, 0.1, 0.97);
+			pso.run(1000, 30, 1.4, 0.4, 0.02, 0.1, 0.97);
 		}
 	}
 	
