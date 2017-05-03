@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+
 import utils.Utils;
 
 import org.apache.commons.lang3.ArrayUtils;
@@ -55,6 +56,7 @@ public class PSO {
 //			System.out.println("position: "+Arrays.toString(swarm[0].getPosition()));
 			changed = false;
 			//calc fitness
+
 			for (int j = 0; j < swarm.length; j++) {
 //				int fit = calcFitness(swarm[j].getPosition());
 				int[] oldChrom = Utils.getJobArray(swarm[j].getPosition(),p.getNumJobs(), false);
@@ -82,6 +84,7 @@ public class PSO {
 				if(fit<iterBest){
 					iterBest = fit;
 				}
+
 				if(fit < globalBest){
 					changed = true;
 //					System.out.println("particle #"+j+" found new best sol");
