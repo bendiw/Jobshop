@@ -434,9 +434,15 @@ public class AntGraph {
 	}
 	
 	public static void main(String[] args) throws IOException {
+<<<<<<< HEAD
 		Problem p = ProblemCreator.create("2.txt");
 		AntGraph a = new AntGraph(p, 2, 0.03, 0.1, 0, 1, 100, 0.001, 0.4, 0.4, 0.1); //decay was 0.01
 		a.run(2000, 20, 0.02, 0.1, 0.97);
+=======
+		Problem p = ProblemCreator.create("5.txt");
+		AntGraph a = new AntGraph(p, 2, 0.03, 0.1, 0, 1, 100, 0.001, 0.4, 0.4, 0.1); //decay was 0.01
+		a.run(2000, 30, 0.0, 0.1, 0.97);
+>>>>>>> refs/remotes/origin/master
 	}
 
 	
